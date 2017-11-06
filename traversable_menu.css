@@ -1,79 +1,9 @@
-html {
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-}
-
-a {
-  cursor: pointer;
-}
-
-*, *:before, *:after {
-  box-sizing: inherit;
-}
-
 .traversable-menu {
-  border: 1px solid black;
-  padding: 0rem;
-  margin: 0;
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
-  width: 33%;
-  height: 100%;
-  background-color: white;
 
 }
-
-.traversable-menu ul {
-
-  list-style: none;
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-}
-
-.traversable-menu ul li {
-
-  list-style: none;
-  list-style-type: none;
-  padding: 0px;
-  padding: 0.5rem;
-  clear: both;
-  border-bottom: 1px solid #222;
-
-}
-
-a.menu__panel__trigger--child {
-  float: right;
-}
-
-.menu__panel__trigger--parent {
-  display: block;
-  padding: 0.5rem;
-  background-color: #eeeeee;
-}
-
-.menu__panel__trigger--top {
-  display: block;
-  padding: 0.5rem;
-  background-color: #cccccc;
-}
-
-/*.traversable-menu ul li:before {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(#ffffff, 0);
-  transition: all 350ms ease-in-out;
-  pointer-events: none;
-}*/
 
 .menu__panel {
 
@@ -84,14 +14,8 @@ a.menu__panel__trigger--child {
   right: 0;
   left: 0;
   padding: 0;
-  background-color: #ffffff;
   width: 100%;
-/*
-  flex-basis: 100%;
-  flex-flow: column nowrap;
-  align-items: stretch;
-  justify-content: flex-start;*/
-  transition: transform 350ms ease-in-out;
+  transition: transform 350ms ease-in-out; /* If you change this, mke sure to also change the panel_slide_animation_duration setting when calling TraversableMenu */
   transform: translateX(100%);
   overflow-x: hidden;
   overflow-y: auto;
@@ -105,9 +29,4 @@ a.menu__panel__trigger--child {
 
 .menu__panel.-show-immediate {
   transition-duration: 0ms;
-}
-
-.menu__panel__title {
-  font-weight: bold;
-  margin-bottom: 1rem;
 }
