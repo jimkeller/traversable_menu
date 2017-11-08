@@ -245,19 +245,7 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
 
         trigger.setAttribute('data-panel-trigger-for', this.panelID(parent_panel) );
         this.parentTriggerTextApply(trigger);
-
-        //
-        // Apply click event
-        //
-        trigger.addEventListener('click',
-          function( event ) {
-            event.preventDefault();
-
-            //$(this).parents( active_selector ).eq(0).removeClass(me.option('classes').panel_currently_active);
-            me.panelActivate( parent_panel );
-            return false;
-          }
-        );
+        this.panelTriggerEventHandler( trigger, parent_panel );
       }
     }
   }
@@ -265,6 +253,62 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
     throw e;
   }
 
+}
+
+TraversableMenu.prototype.panelTriggerEventHandler = function( trigger, panel_to_activate ) {
+  try {
+
+    var me = this;
+
+    //
+    // for ADA compliance, we want to check to see if someone pressed enter as opposed to clicking on the link with a mouse
+    // If they're using a keyboard to navigate, focus the first menu item of the newly activated panel. Otherwise, don't
+    //
+    trigger.addEventListener('keyup',
+      function( event ) {
+        event.preventDefault();
+
+        if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
+          panel_to_activate.setAttribute('data-last-activation-event', 'keyup');
+          me.panelActivate( panel_to_activate, { 'focus_first_item': true } );
+        }
+        return false;
+      }
+    );
+
+    trigger.addEventListener('mouseup',
+      function( event ) {
+        event.preventDefault();
+        if ( panel_to_activate.getAttribute('data-last-activation-event') != 'touchend' ) { //panel was already activated by touch
+          me.panelActivate( panel_to_activate );
+        }
+        panel_to_activate.getAttribute('data-last-activation-event', 'mouseup');
+        return false;
+      }
+    );
+
+    /* This doesn't seem necessary for now...
+    trigger.addEventListener('touchend',
+      function( event ) {
+        event.preventDefault();
+        panel_to_activate.setAttribute('data-last-activation-event', 'touchend');
+        me.panelActivate( panel_to_activate );
+        return false;
+      }
+    );
+    */
+
+    trigger.addEventListener('click',
+      function( event ) {
+        event.preventDefault();
+        return false;
+      }
+    );
+
+  }
+  catch(e) {
+    throw e;
+  }
 }
 
 /**
@@ -344,18 +388,8 @@ TraversableMenu.prototype.childTriggerInit = function( menu_item, panel ) {
       child_panel.setAttribute('data-panel-triggered-by', trigger.getAttribute('id') );
 
       this.panelTitle( child_panel, menu_item_link_text );
+      this.panelTriggerEventHandler( trigger, child_panel );
 
-      //
-      // Apply click event
-      //
-      trigger.addEventListener('click',
-        function( event ) {
-          event.preventDefault();
-          me.panelActivate(child_panel);
-          return false;
-        }
-
-      );
     }
   }
   catch(e) {
@@ -381,13 +415,7 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
 
           if ( topmost_panel ) {
             top_trigger.innerHTML = this.option('triggers.top_text');
-            top_trigger.addEventListener('click',
-              function( event ) {
-                event.preventDefault();
-                me.panelActivate(topmost_panel);
-                return false;
-              }
-            );
+            this.panelTriggerEventHandler( top_trigger, topmost_panel );
           }
         }
       }
@@ -645,6 +673,7 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
   var me = this;
   var show_immediate =  ( typeof(options.show_immediate) !== 'undefined' && options.show_immediate ) ? true : false;
   var focus_timeout = ( show_immediate ) ? 0 : this.option('panel_slide_animation_duration');
+  var focus_enabled = ( typeof(options.focus_first_item) !== 'undefined' && options.focus_first_item ) ? true : false;
 
   if ( !this.panelIsActive(panel) ) {
 
@@ -665,18 +694,19 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
     this.panelActiveAttributesApply( panel );
     this.activeTrailRecalculate();
 
-
-    window.setTimeout(
-      function() {
-        if( me.option('accessibility.menu_item_link_focus_first') ) {
-          var first_menu_link = panel.querySelector( me.option('selectors.menu_item_link') );
-          if ( first_menu_link ) {
-            first_menu_link.focus();
+    if ( focus_enabled ) {
+      window.setTimeout(
+        function() {
+          if( me.option('accessibility.menu_item_link_focus_first') ) {
+            var first_menu_link = panel.querySelector( me.option('selectors.menu_item_link') );
+            if ( first_menu_link ) {
+              first_menu_link.focus();
+            }
           }
-        }
-      },
-      focus_timeout
-    );
+        },
+        focus_timeout
+      );
+    }
 
     window.requestAnimationFrame(
       function() {
