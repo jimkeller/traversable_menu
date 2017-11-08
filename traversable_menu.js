@@ -728,6 +728,7 @@ TraversableMenu.prototype.panelActiveAttributesApply = function( panel ) {
     panel.classList.add( this.option('classes.panel_active') );
     panel.setAttribute('aria-hidden', 'false');
     panel.setAttribute('tabindex', '0');
+    panel.scrollTop = 0;
 
     this.panelActiveTrailApply(panel);
     this.tabbablesToggle( panel, true );
@@ -803,6 +804,7 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
 
     if ( panel_parent = this.panelGetParent(panel) ) {
       panel_parent.classList.add( this.option('classes.panel_child_open') );
+      panel_parent.scrollTop = 0;
       this.panelActiveTrailApply(panel_parent);
     }
 
