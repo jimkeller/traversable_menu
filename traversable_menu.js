@@ -790,10 +790,12 @@ TraversableMenu.prototype.selectorFromClassName = function( class_name ) {
  * Provides the ability to operate *ONLY* on a specific panel, without traversing into subpanels
  * useful for when you want to operate on a single panel but not its subpanels
  */
-TraversableMenu.prototype.onlyThisPanel = function( panel, callback ) {
+TraversableMenu.prototype.onlyThisPanel = function( panel, callback, depth ) {
 
   var children = panel.children;
   var child;
+
+  depth = depth || 0;
 
   for ( var i = 0; i < children.length; i++ ) {
 
@@ -802,12 +804,15 @@ TraversableMenu.prototype.onlyThisPanel = function( panel, callback ) {
     if ( !child.matches( this.option('selectors.panel')) ) {
 
       callback.call( this, child );
-      this.onlyThisPanel(child, callback);
+      depth++;
+      this.onlyThisPanel(child, callback, depth);
+      depth--;
     }
   }
 
-  callback.call( this, panel );
-
+  if ( depth == 0 ) {
+    callback.call( this, panel );
+  }
 }
 
 /**
