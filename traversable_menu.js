@@ -42,6 +42,15 @@ function TraversableMenu( options ) {
 
 }
 
+// TraversableMenu.prototype.panelsContainerHeightApply = function (  ) {
+//   var panels_container = this.panelsGetContainer();
+//
+//   if ( panels_container ) {
+//
+//   }
+//
+// }
+
 /**
  * Gets an option by name, or sets an option if val parameter is present. Checks local options and falls back to global options
  * @param {string} key
@@ -156,6 +165,10 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     panel.setAttribute( 'data-panel-index', panel_index.toString() );
     panel.setAttribute( 'role', this.option('accessibility.panel_role') );
     this.panelIDSetByDepthIndex( panel, depth, panel_index );
+
+    // if ( this.option('panel_height_auto') ) {
+    //   panel.style.height = panel.scrollHeight.toString() + 'px';
+    // }
 
     if ( depth == 0 ) {
       this.panelTitle( panel, this.option('panel_title_first') );
@@ -694,6 +707,10 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
     this.panelActiveAttributesApply( panel );
     this.activeTrailRecalculate();
 
+    if ( this.option('panels_container_height_auto') ) {
+      this.panelsContainerResize();
+    }
+
     if ( focus_enabled ) {
       window.setTimeout(
         function() {
@@ -714,6 +731,21 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
       }
     );
   }
+
+}
+
+TraversableMenu.prototype.panelsContainerResize = function() {
+
+  var container = this.panelsGetContainer();
+  var active_panel = this.panelGetActive();
+
+  if ( container ) {
+
+    if ( active_panel ) {
+      container.style.height = active_panel.scrollHeight.toString() + 'px';
+    }
+  }
+
 
 }
 
@@ -974,6 +1006,8 @@ TraversableMenu.options_default = function() {
       'menu_item_role': '',
       'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown
     },
+    'panel_height_auto': true,
+    'panels_container_height_auto': true, //whether to automatically set the panel container height
     'panel_slide_animation_duration': 350, //in ms
     'panel_title_first': '', //the title of the first panel
     'panel_title_text': '[:menu-title:]', //title of subsequent panels. [:menu-title:] will be replaced by the text of the link that expands to show the menu
