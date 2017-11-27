@@ -10,6 +10,7 @@ function TraversableMenu( options ) {
 
     this.options = options;
     this.panelsInitialize();
+    this.panelsHeightStore();
 
     var panel_auto_activated = false;
 
@@ -32,6 +33,18 @@ function TraversableMenu( options ) {
       }
 
     }
+
+    //
+    // Resize handler
+    //
+    var me = this;
+
+    window.addEventListener( 'resize',
+      function() {
+        me.resizeHandler();
+      }
+    );
+
   }
   catch( e ) {
     if ( typeof(console) !== 'undefined' && typeof(console.log) !== 'undefined') {
@@ -39,6 +52,13 @@ function TraversableMenu( options ) {
       console.log(e.message);
     }
   }
+
+}
+
+TraversableMenu.prototype.resizeHandler = function( ) {
+
+  this.panelsHeightStore();
+  this.panelActiveHeightApply();
 
 }
 
@@ -167,7 +187,7 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     this.panelIDSetByDepthIndex( panel, depth, panel_index );
 
     // if ( this.option('panel_height_auto') ) {
-    //   panel.style.height = panel.scrollHeight.toString() + 'px';
+    //   this.panelApplyCalculatedHeight( panel );
     // }
 
     if ( depth == 0 ) {
@@ -256,7 +276,9 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
       for ( var i = 0; i < parent_triggers.length; i++ ) {
         var trigger = parent_triggers[i];
 
-        trigger.setAttribute('data-panel-trigger-for', this.panelID(parent_panel) );
+        this.triggerAttributesInit(trigger, parent_panel, 'parent');
+        parent_panel.setAttribute('data-panel-triggered-as-parent-by', trigger.getAttribute('id') );
+
         this.parentTriggerTextApply(trigger);
         this.panelTriggerEventHandler( trigger, parent_panel );
       }
@@ -393,12 +415,9 @@ TraversableMenu.prototype.childTriggerInit = function( menu_item, panel ) {
       var panel_index = child_panel.getAttribute('data-panel-index');
       var menu_item_link_text = menu_item_link.innerHTML;
 
-      trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + panel_depth.toString() + '_' + panel_index.toString() );
-      // @TODO Fix aria expanded settings trigger.setAttribute('aria-expanded', false);
-      trigger.setAttribute('aria-controls', this.panelID(child_panel) );
-      trigger.setAttribute('data-panel-trigger-for', this.panelID(child_panel) );
+      this.triggerAttributesInit(trigger, child_panel, 'child');
 
-      child_panel.setAttribute('data-panel-triggered-by', trigger.getAttribute('id') );
+      child_panel.setAttribute('data-panel-triggered-as-child-by', trigger.getAttribute('id') );
 
       this.panelTitle( child_panel, menu_item_link_text );
       this.panelTriggerEventHandler( trigger, child_panel );
@@ -428,6 +447,7 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
 
           if ( topmost_panel ) {
             top_trigger.innerHTML = this.option('triggers.top_text');
+            this.triggerAttributesInit(top_trigger, topmost_panel, 'top');
             this.panelTriggerEventHandler( top_trigger, topmost_panel );
           }
         }
@@ -440,6 +460,25 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
       }
     }
 
+  }
+  catch(e) {
+    throw e;
+  }
+
+}
+
+TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel, trigger_type ) {
+
+  try {
+
+    var panel_depth = panel.getAttribute('data-panel-depth');
+    var panel_index = panel.getAttribute('data-panel-index');
+
+    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() );
+    trigger.setAttribute('aria-haspopup', true);
+    trigger.setAttribute('aria-expanded', false);
+    trigger.setAttribute('aria-controls', this.panelID(panel));
+    trigger.setAttribute('data-panel-trigger-for', this.panelID(panel) );
   }
   catch(e) {
     throw e;
@@ -669,6 +708,50 @@ TraversableMenu.prototype.panelGetParent = function( panel ) {
 }
 
 
+/**
+ * Get the trigger from the *parent* panel that shows a given panel
+ * In other words, this will be the trigger that a user clicks in a panel to traverse down to the given panel
+ * @param {DomElement} panel
+ * @return {DomElement} trigger or null if none found
+ */
+TraversableMenu.prototype.panelGetTriggerParent = function( panel ) {
+  try {
+
+    var trigger_id;
+
+    if ( trigger_id = panel.getAttribute('data-panel-triggered-as-parent-by') ) {
+      return this.elementFind( '#' + trigger_id);
+    }
+
+    return null;
+  }
+  catch (e) {
+    throw e;
+  }
+}
+
+
+/**
+ * Get the trigger from the *child* panel that shows a given panel
+ * In other words, this will be the trigger that a user clicks in a panel to return up to the given panel
+ * @param {DomElement} panel
+ * @return {DomElement} trigger or null if none found
+ */
+TraversableMenu.prototype.panelGetTriggerChild = function( panel ) {
+  try {
+    var trigger_id;
+
+    if ( trigger_id = panel.getAttribute('data-panel-triggered-as-child-by') ) {
+      return this.elementFind( '#' + trigger_id);
+    }
+
+    return null;
+  }
+  catch (e) {
+    throw e;
+  }
+}
+
 TraversableMenu.prototype.panelGetActive = function() {
 
   return this.elementFind( this.option('selectors.panel') + '.' + this.option('classes.panel_active') );
@@ -687,6 +770,7 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
   var show_immediate =  ( typeof(options.show_immediate) !== 'undefined' && options.show_immediate ) ? true : false;
   var focus_timeout = ( show_immediate ) ? 0 : this.option('panel_slide_animation_duration');
   var focus_enabled = ( typeof(options.focus_first_item) !== 'undefined' && options.focus_first_item ) ? true : false;
+  var panel_container;
 
   if ( !this.panelIsActive(panel) ) {
 
@@ -707,8 +791,16 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
     this.panelActiveAttributesApply( panel );
     this.activeTrailRecalculate();
 
-    if ( this.option('panels_container_height_auto') ) {
-      this.panelsContainerResize();
+    if ( this.option('panel_height_auto') ) {
+      this.panelActiveHeightApply();
+    }
+
+    if ( this.option('panel_auto_scroll_to_top') ) {
+      if ( panel_container = this.panelsGetContainer() ) {
+        panel_container.scrollTop = 0;
+      }
+
+      panel.scrollTop = 0;
     }
 
     if ( focus_enabled ) {
@@ -734,18 +826,79 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
 
 }
 
+TraversableMenu.prototype.panelsHeightStore = function() {
+
+  var panels = this.panelsGetAll();
+  var height = 0;
+
+  for ( var i = 0; i < panels.length; i++ ) {
+    height = TraversableMenu.heightCalculateBasedOnImmediateChildren(panels[i]);
+    panels[i].setAttribute('data-panel-height', height);
+  }
+
+}
+
+TraversableMenu.prototype.panelApplyCalculatedHeight = function( panel, options ) {
+
+  var height;
+
+  options = options || {};
+
+  if ( (typeof(options.ignore_stored) == 'undefined' || options.ignore_stored == false) && panel.hasAttribute('data-panel-height') ) {
+     height = panel.getAttribute('data-panel-height');
+  }
+  else {
+    height = TraversableMenu.heightCalculateBasedOnImmediateChildren(panel);
+  }
+
+  //panel.setAttribute('data-panel-height', height);
+
+  if ( height !== null ) {
+    panel.style.height = height + 'px';
+  }
+
+  return height;
+
+}
+
 TraversableMenu.prototype.panelsContainerResize = function() {
 
   var container = this.panelsGetContainer();
   var active_panel = this.panelGetActive();
+  var height = null;
 
   if ( container ) {
 
-    if ( active_panel ) {
-      container.style.height = active_panel.scrollHeight.toString() + 'px';
+    height = TraversableMenu.heightCalculateBasedOnImmediateChildren(active_panel);
+
+    if ( height !== null ) {
+      container.style.height = height.toString() + 'px';
     }
   }
 
+  return height;
+
+}
+
+TraversableMenu.prototype.panelActiveHeightApply = function ( ) {
+
+  var active_panel = this.panelGetActive();
+  var parent_panel;
+
+  if ( active_panel ) {
+    var new_height = this.panelApplyCalculatedHeight(active_panel);
+    var parent_panel = this.panelGetParent(active_panel);
+
+    while ( parent_panel ) {
+       parent_panel.style.height = new_height.toString() + 'px';
+       parent_panel = this.panelGetParent(parent_panel);
+    }
+
+    if ( this.option('panels_container_height_auto') ) {
+      this.panelsContainerResize();
+    }
+
+  }
 
 }
 
@@ -814,13 +967,25 @@ TraversableMenu.prototype.panelActiveTrailUnset = function( panel ) {
   try {
 
       var child_panel;
+      var trigger;
 
       panel.classList.remove( this.option('classes.panel_active_trail') );
       panel.classList.remove( this.option('classes.panel_child_open') );
 
+      if ( trigger = this.panelGetTriggerParent(panel) ) {
+        trigger.setAttribute('aria-expanded', false);
+      }
+
+      if ( trigger = this.panelGetTriggerChild(panel) ) {
+        trigger.setAttribute('aria-expanded', false);
+      }
+
+
       if ( child_panel = this.childPanelGet(panel) ) {
         this.panelActiveTrailUnset(child_panel);
       }
+
+
   }
   catch(e) {
     throw e;
@@ -831,8 +996,14 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
   try {
 
     var panel_parent;
+    var trigger;
 
     panel.classList.add( this.option('classes.panel_active_trail') );
+
+    if ( trigger = this.panelGetTriggerChild(panel) ) {
+      trigger.setAttribute('aria-expanded', true);
+    }
+
 
     if ( panel_parent = this.panelGetParent(panel) ) {
       panel_parent.classList.add( this.option('classes.panel_child_open') );
@@ -878,6 +1049,32 @@ TraversableMenu.prototype.onlyThisPanel = function( panel, callback, depth ) {
     callback.call( this, panel );
   }
 }
+
+// TraversableMenu.prototype.onlyThisElement = function( element, callback, depth ) {
+//
+//   var children = panel.children;
+//   var child;
+//
+//   depth = depth || 0;
+//
+//   for ( var i = 0; i < children.length; i++ ) {
+//
+//     child = children[i];
+//
+//     if ( !child.matches( this.option('selectors.panel')) ) {
+//
+//       callback.call( this, child );
+//       depth++;
+//       this.onlyThisPanel(child, callback, depth);
+//       depth--;
+//     }
+//   }
+//
+//   if ( depth == 0 ) {
+//     callback.call( this, panel );
+//   }
+//
+// }
 
 /**
  * Enables or disables tabbing to elements. For accessibility compliance, certain elements have their tabindex
@@ -968,6 +1165,50 @@ TraversableMenu.siblingChildrenBySelector = function( container, selector ) {
   }
 }
 
+TraversableMenu.immediateChildren = function( container ) {
+  try {
+
+    var children = container.children;
+
+    for ( var i = 0; i < children.length; i++ ) {
+
+      var child_items_only = [].filter.call(children,
+        function( item ) {
+          return item.parentNode == container;
+        }
+      );
+
+      return child_items_only;
+
+    }
+
+    return [];
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, options ) {
+
+  var height = null;
+
+  if ( element ) {
+
+    var children = TraversableMenu.immediateChildren(element);
+
+    for( var i = 0; i < children.length; i++ ) {
+      height += parseInt(children[i].scrollHeight);
+    }
+
+  }
+
+
+  return height;
+
+}
+
 TraversableMenu.options_default = function() {
   return {
     selectors: {
@@ -1001,11 +1242,12 @@ TraversableMenu.options_default = function() {
       'top_text_use_top_panel_title_at_first_level': false //if panel_title_first is set, use that as our "top_text" at the first level below the topmost panel
     },
     accessibility: {
-      'container_role': '',
-      'panel_role': '',
-      'menu_item_role': '',
-      'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown
+      'container_role': 'menubar',
+      'panel_role': 'menu',
+      'menu_item_role': 'menuitem',
+      'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown using keyboard
     },
+    'panel_auto_scroll_to_top': true,
     'panel_height_auto': true,
     'panels_container_height_auto': true, //whether to automatically set the panel container height
     'panel_slide_animation_duration': 350, //in ms
