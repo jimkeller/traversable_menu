@@ -9,6 +9,7 @@ function TraversableMenu( options ) {
     options = options || {};
 
     this.options = options;
+    this.menu_item_index = 0;
     this.panelsInitialize();
     this.panelsHeightStore();
 
@@ -173,18 +174,18 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     var menu_item;
     var parent_menu_item_link;
     var parent_panel = ( typeof(options.panel_parent) !== 'undefined' ) ? options.panel_parent : null;
-    var panel_index = ( typeof(options.menu_item_index) !== 'undefined' ) ? options.menu_item_index : 0;
     var parent_menu_item = ( typeof(options.parent_menu_item) !== 'undefined' ) ? options.parent_menu_item : null;
 
+    this.debug('menu item index', this.menu_item_index, panel);
 
     //
     // Base panel initialization
     //
     panel.setAttribute( 'data-panel-depth', depth.toString() );
     panel.classList.add( TraversableMenu.tokenReplace(this.option('classes.panel_depth'), 'n', depth.toString()) );
-    panel.setAttribute( 'data-panel-index', panel_index.toString() );
+    panel.setAttribute( 'data-panel-index', this.menu_item_index.toString() );
     panel.setAttribute( 'role', this.option('accessibility.panel_role') );
-    this.panelIDSetByDepthIndex( panel, depth, panel_index );
+    this.panelIDSetByDepthIndex( panel, depth, this.menu_item_index );
 
     // if ( this.option('panel_height_auto') ) {
     //   this.panelApplyCalculatedHeight( panel );
@@ -217,8 +218,13 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     //
     var menu_items = this.childMenuItemsGet(panel);
 
-    for ( var i = 0; i < menu_items.length; i++ ) {
+    for ( var i = 0; i < menu_items.length; i++ ) {      
 
+      //
+      // Keep a rolling count of all the menu items all the way down the panels, so we can create unique IDs      
+      //
+      this.menu_item_index ++; 
+    
       this.menuItemInit(menu_items[i]);
 
       child_panel = this.childPanelGet(menu_items[i]);
@@ -229,17 +235,20 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
         // Recursively call panelInitialize on the child panel
         //
         depth++;
-        this.panelInitialize( child_panel, depth, { panel_parent: panel, parent_menu_item: menu_items[i], menu_item_index: i } );
+        this.panelInitialize( child_panel, depth, { panel_parent: panel, parent_menu_item: menu_items[i] } );
         depth--;
 
         //
         // Initialize child triggers
         //
-        this.childTriggerInit(menu_items[i], panel);
-
+        this.childTriggerInit(menu_items[i], panel);        
 
       }
+
+
+
     }
+   
 
   }
   catch(e) {
@@ -304,6 +313,7 @@ TraversableMenu.prototype.panelTriggerEventHandler = function( trigger, panel_to
         event.preventDefault();
 
         if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
+          me.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
           panel_to_activate.setAttribute('data-last-activation-event', 'keyup');
           me.panelActivate( panel_to_activate, { 'focus_first_item': true } );
         }
@@ -314,10 +324,12 @@ TraversableMenu.prototype.panelTriggerEventHandler = function( trigger, panel_to
     trigger.addEventListener('mouseup',
       function( event ) {
         event.preventDefault();
+        me.debug('Mouseup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
+
         if ( panel_to_activate.getAttribute('data-last-activation-event') != 'touchend' ) { //panel was already activated by touch
           me.panelActivate( panel_to_activate );
         }
-        panel_to_activate.getAttribute('data-last-activation-event', 'mouseup');
+        panel_to_activate.setAttribute('data-last-activation-event', 'mouseup');
         return false;
       }
     );
@@ -639,6 +651,8 @@ TraversableMenu.prototype.panelsGetAll = function() {
 TraversableMenu.prototype.panelsResetActive = function( options ) {
 
   try {
+    this.debug('panelsResetActive called');
+
     options = options || {};
 
     var all_panels = this.panelsGetAll();
@@ -665,7 +679,7 @@ TraversableMenu.prototype.panelIDSetByDepthIndex = function( panel, depth, index
 
   try {
 
-    var id_suffix = 'panel_' + depth.toString() + '_' + index.toString();
+    var id_suffix = 'panel_' + depth.toString() + '_' + index.toString(); 
 
     //panel.setAttribute( 'data-panel-id', id_suffix );
     panel.setAttribute( 'id', this.elementIDPrefix() + '_' + id_suffix );
@@ -771,6 +785,8 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
   var focus_timeout = ( show_immediate ) ? 0 : this.option('panel_slide_animation_duration');
   var focus_enabled = ( typeof(options.focus_first_item) !== 'undefined' && options.focus_first_item ) ? true : false;
   var panel_container;
+
+  this.debug('Panel activate called', panel);
 
   if ( !this.panelIsActive(panel) ) {
 
@@ -998,6 +1014,7 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
     var panel_parent;
     var trigger;
 
+    this.debug('Applying active trail', panel);
     panel.classList.add( this.option('classes.panel_active_trail') );
 
     if ( trigger = this.panelGetTriggerChild(panel) ) {
@@ -1105,6 +1122,19 @@ TraversableMenu.prototype.tabbablesToggle = function( which_element, action, opt
   }
 
 }
+
+TraversableMenu.prototype.debug = function() {
+
+  if ( this.option('debug') ) {
+    if ( arguments.length > 0 ) {
+      for ( var i = 0; i < arguments.length; i++ ) {
+        console.log( arguments[i] );
+      }
+    }
+  }
+
+}
+
 
 TraversableMenu.tokenReplace = function( given_string, token, val ) {
   return given_string.replace( '[:' + token.toString() + ':]', val);
@@ -1247,6 +1277,7 @@ TraversableMenu.options_default = function() {
       'menu_item_role': 'menuitem',
       'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown using keyboard
     },
+    'debug': false,
     'panel_auto_scroll_to_top': true,
     'panel_height_auto': true,
     'panels_container_height_auto': true, //whether to automatically set the panel container height
@@ -1261,6 +1292,7 @@ TraversableMenu.options_default = function() {
     }
   };
 }
+
 
 //
 // A quick polyfill to support Element.matches in older browsers
