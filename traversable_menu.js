@@ -655,10 +655,10 @@ TraversableMenu.prototype.panelsResetActive = function( options ) {
 
     options = options || {};
 
-    var all_panels = this.panelsGetAll();
+    var active_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active')) ); //this.panelsGetAll();
 
-    for ( var i = 0; i < all_panels.length; i++ ) {
-      this.panelActiveAttributesRemove( all_panels[i] );
+    for ( var i = 0; i < active_panels.length; i++ ) {
+      this.panelActiveAttributesRemove( active_panels[i] );
     }
   }
   catch (e) {
@@ -960,11 +960,11 @@ TraversableMenu.prototype.activeTrailRecalculate = function() {
   try {
 
     var active_panel = this.panelGetActive();
-    var all_panels = this.panelsGetAll();
+    var active_trail_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active_trail')) ); //this.panelsGetAll();
 
-    if ( all_panels ) {
-      for ( var i = 0; i < all_panels.length; i++ ) {
-        this.panelActiveTrailUnset(all_panels[i]);
+    if ( active_trail_panels ) {
+      for ( var i = 0; i < active_trail_panels.length; i++ ) {
+        this.panelActiveTrailUnset(active_trail_panels[i]);
       }
 
       if ( active_panel ) {
@@ -1034,7 +1034,7 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
   }
 }
 
-TraversableMenu.prototype.selectorFromClassName = function( class_name ) {
+TraversableMenu.selectorFromClassName = function( class_name ) {
   return '.' + class_name.toString();
 }
 
