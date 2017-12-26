@@ -5,12 +5,24 @@
 ***/
 function TraversableMenu( options ) {
 
+  var success = true;
+  var callback = null;
+  var callback_params = { traversable_menu: this };
+
   try {
     options = options || {};
 
     this.options = options;
     this.menu_item_index = 0;
-    this.panelsInitialize();
+
+    //
+    // Fire 'before' initialize callback
+    //
+    if ( callback = this.option('callbacks.panels.initialize.before') ) {
+      callback.call(this, callback_params);
+    }
+
+    success = this.panelsInitialize();
     this.panelsHeightStore();
 
     var panel_auto_activated = false;
@@ -48,12 +60,26 @@ function TraversableMenu( options ) {
 
   }
   catch( e ) {
-    if ( typeof(console) !== 'undefined' && typeof(console.log) !== 'undefined') {
-      console.log( "Error initializing traversable menu");
-      console.log(e.message);
+
+    success = false;
+
+    if ( typeof(console) !== 'undefined' && typeof(console.error) !== 'undefined') {
+      console.error( "Error initializing traversable menu");
+      console.error(e.message);
+      console.error(e);
     }
   }
+  finally {
 
+    //
+    // Fire 'after' initialize callback
+    //
+    callback_params.success = success;
+    if ( callback = this.option('callbacks.panels.initialize.after') ) {
+      callback.call(this, callback_params);
+    }
+
+  }
 }
 
 TraversableMenu.prototype.resizeHandler = function( ) {
@@ -136,6 +162,7 @@ TraversableMenu.prototype.panelsInitialize = function() {
 
   try {
 
+    var success = true;
     var panels_container = this.panelsGetContainer();
 
     if ( panels_container ) {
@@ -153,10 +180,15 @@ TraversableMenu.prototype.panelsInitialize = function() {
       panels_container.classList.add( this.option('classes.panels_initialized') );
     }
     else {
-      if ( !this.option('errors.silent_if_no_container') ) {
-        throw "Could not get panels container. Check your container selector, which is set to: " + this.option('selectors.panels_container').toString();
-      }
+      success = false;
     }
+
+    if ( !this.option('errors.silent_if_no_container') ) {
+      throw "Could not get panels container. Check your container selector, which is set to: " + this.option('selectors.panels_container').toString();
+    }    
+
+    return success;
+
   }
   catch(e) {
     throw e;
@@ -186,6 +218,7 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     panel.setAttribute( 'data-panel-index', this.menu_item_index.toString() );
     panel.setAttribute( 'role', this.option('accessibility.panel_role') );
     this.panelIDSetByDepthIndex( panel, depth, this.menu_item_index );
+    this.panelActiveAttributesRemove( panel ); //Assume inactive to start; will be activated later
 
     // if ( this.option('panel_height_auto') ) {
     //   this.panelApplyCalculatedHeight( panel );
@@ -1108,6 +1141,10 @@ TraversableMenu.prototype.tabbablesToggle = function( which_element, action, opt
     options = options || {};
     var tabindex = ( action == true ) ? '0' : '-1';
 
+    if ( typeof(options.exclude_self) == 'undefined' || !options.exclude_self ) {
+      which_element.setAttribute('tabindex', tabindex);
+    }
+
     this.onlyThisPanel( which_element,
       function( child ) {
         if ( child.matches(this.option('selectors.tabbable_elements')) ) {
@@ -1276,6 +1313,24 @@ TraversableMenu.options_default = function() {
       'panel_role': 'menu',
       'menu_item_role': 'menuitem',
       'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown using keyboard
+    },
+    callbacks: {
+      panel: {
+        activate: {
+          before: null,
+          after: null
+        },
+        initialize: {
+          before: null,
+          after: null
+        }
+      },
+      panels: {
+        initialize: {
+          before: null,
+          after: null
+        }
+      }
     },
     'debug': false,
     'panel_auto_scroll_to_top': true,
