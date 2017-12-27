@@ -43,14 +43,14 @@ a {
 
 }
 
-a.menu__panel__trigger--child {
-  float: right;
-}
-
 .menu__panel__trigger--parent {
   display: block;
   padding: 0.5rem;
   background-color: #eeeeee;
+}
+
+.menu__panel__trigger--child {
+  float: right;
 }
 
 .menu__panel__trigger--top {

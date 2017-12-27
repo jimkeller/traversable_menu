@@ -1264,9 +1264,20 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
   if ( element ) {
 
     var children = TraversableMenu.immediateChildren(element);
+    var child_style;
 
     for( var i = 0; i < children.length; i++ ) {
-      height += parseInt(children[i].scrollHeight);
+
+      child_style = window.getComputedStyle(children[i]);
+
+      height += parseInt(children[i].scrollHeight); 
+
+      if ( child_style ) {
+        height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //scrollHeight doesn't include margins
+        height += ( child_style.marginBottom != '' ) ? parseInt(child_style.marginBottom) : 0; 
+        height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; //scrollHeight doesn't include borders
+        height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
+      }
     }
 
   }
