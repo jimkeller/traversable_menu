@@ -829,7 +829,10 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
     // Show this panel
     //
     if ( show_immediate ) {
-        panel.classList.add( this.option('classes.panel_show_immediate') );
+        var panels = this.panelsGetAll();
+        for( var j = 0; j < panels.length; j++ ) {
+          panels[j].classList.add( this.option('classes.panel_show_immediate') );
+        }
     }
 
 
@@ -866,11 +869,18 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
       );
     }
 
-    window.requestAnimationFrame(
-      function() {
-        panel.classList.remove( me.option('classes.panel_show_immediate') );
-      }
-    );
+    if ( show_immediate ) {
+      window.requestAnimationFrame(
+        function() {
+          var immediate_panels = me.elementFindAll ( TraversableMenu.selectorFromClassName(me.option('classes.panel_show_immediate')) );
+          var i;
+
+          for( i = 0; i < immediate_panels.length; i++ ) {
+            immediate_panels[i].classList.remove( me.option('classes.panel_show_immediate') );
+          }
+        }
+      );
+    }
   }
 
 }

@@ -28,3 +28,7 @@
 .menu__panel.-show-immediate {
   transition-duration: 0ms;
 }
+
+.-show-immediate {
+  transition-duration: 0ms !important;
+}
