@@ -41,7 +41,7 @@ function TraversableMenu( options ) {
         var topmost_panel      = this.childPanelGet(panels_container); //get the first panel
 
         if ( topmost_panel ) {
-          this.panelActivate(topmost_panel);
+          this.panelActivate(topmost_panel, { 'show_immediate': true });
         }
       }
 
@@ -823,18 +823,18 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
 
   if ( !this.panelIsActive(panel) ) {
 
-    this.panelsResetActive();
-
     //
     // Show this panel
     //
     if ( show_immediate ) {
+        this.debug('showing immediately');
         var panels = this.panelsGetAll();
         for( var j = 0; j < panels.length; j++ ) {
           panels[j].classList.add( this.option('classes.panel_show_immediate') );
         }
     }
 
+    this.panelsResetActive();
 
     //@TODO replace li with selector
     //$(panel).parent('li').addClass( this.option('classes').panel_child_open );
@@ -870,16 +870,12 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
     }
 
     if ( show_immediate ) {
-      window.requestAnimationFrame(
-        function() {
-          var immediate_panels = me.elementFindAll ( TraversableMenu.selectorFromClassName(me.option('classes.panel_show_immediate')) );
-          var i;
+      var immediate_panels = me.elementFindAll ( TraversableMenu.selectorFromClassName(me.option('classes.panel_show_immediate')) );
+      var i;
 
-          for( i = 0; i < immediate_panels.length; i++ ) {
-            immediate_panels[i].classList.remove( me.option('classes.panel_show_immediate') );
-          }
-        }
-      );
+      for( i = 0; i < immediate_panels.length; i++ ) {
+        immediate_panels[i].classList.remove( me.option('classes.panel_show_immediate') );
+      }
     }
   }
 
