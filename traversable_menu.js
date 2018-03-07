@@ -555,7 +555,13 @@ TraversableMenu.prototype.elementFind = function( selector ) {
 
   try {
     var container = this.panelsGetContainer();
-    return container.querySelector( selector );
+
+    if ( container ) {
+      return container.querySelector( selector );
+    }
+
+    return null;
+    
   }
   catch(e) {
     throw e;
