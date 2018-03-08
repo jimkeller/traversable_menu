@@ -218,13 +218,13 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     //
     var menu_items = this.childMenuItemsGet(panel);
 
-    for ( var i = 0; i < menu_items.length; i++ ) {      
+    for ( var i = 0; i < menu_items.length; i++ ) {
 
       //
-      // Keep a rolling count of all the menu items all the way down the panels, so we can create unique IDs      
+      // Keep a rolling count of all the menu items all the way down the panels, so we can create unique IDs
       //
-      this.menu_item_index ++; 
-    
+      this.menu_item_index ++;
+
       this.menuItemInit(menu_items[i]);
 
       child_panel = this.childPanelGet(menu_items[i]);
@@ -241,14 +241,14 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
         //
         // Initialize child triggers
         //
-        this.childTriggerInit(menu_items[i], panel);        
+        this.childTriggerInit(menu_items[i], panel);
 
       }
 
 
 
     }
-   
+
 
   }
   catch(e) {
@@ -555,7 +555,13 @@ TraversableMenu.prototype.elementFind = function( selector ) {
 
   try {
     var container = this.panelsGetContainer();
-    return container.querySelector( selector );
+
+    if ( container ) {
+      return container.querySelector( selector );
+    }
+
+    return null;
+    
   }
   catch(e) {
     throw e;
@@ -679,7 +685,7 @@ TraversableMenu.prototype.panelIDSetByDepthIndex = function( panel, depth, index
 
   try {
 
-    var id_suffix = 'panel_' + depth.toString() + '_' + index.toString(); 
+    var id_suffix = 'panel_' + depth.toString() + '_' + index.toString();
 
     //panel.setAttribute( 'data-panel-id', id_suffix );
     panel.setAttribute( 'id', this.elementIDPrefix() + '_' + id_suffix );
@@ -847,9 +853,13 @@ TraversableMenu.prototype.panelsHeightStore = function() {
   var panels = this.panelsGetAll();
   var height = 0;
 
-  for ( var i = 0; i < panels.length; i++ ) {
-    height = TraversableMenu.heightCalculateBasedOnImmediateChildren(panels[i]);
-    panels[i].setAttribute('data-panel-height', height);
+  if (panels !== null) {
+
+    for ( var i = 0; i < panels.length; i++ ) {
+      height = TraversableMenu.heightCalculateBasedOnImmediateChildren(panels[i]);
+      panels[i].setAttribute('data-panel-height', height);
+    }
+
   }
 
 }
