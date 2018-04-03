@@ -10,7 +10,7 @@ Copyright (c) 2017 Jim Keller, Eastern Standard
 https://www.easternstandard.com
 
 ## Key Features
-* Fully ADA compliant - supports keyboard navigation, tabbing, and aria labels
+* Fully ADA / WCAG 2.0 / Section 508 compliant - supports keyboard navigation, tabbing, and aria labels
 * Extremely customizable - see the options list below
 * No dependencies (not even jQuery) - runs in plain javascript
 * ES6 compatible
