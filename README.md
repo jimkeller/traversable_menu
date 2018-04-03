@@ -5,10 +5,8 @@ A sliding multi-level navigation drawer menu written using vanilla javascript
 
 ![Traversable menu example][traversable_menu_screenshot]
 
-Version 1.0.0
-
-Copyright (c) 2017 Jim Keller, Eastern Standard
-
+Version 1.0.0  
+Copyright (c) 2017 Jim Keller, Eastern Standard  
 https://www.easternstandard.com
 
 ## Key Features
@@ -89,57 +87,57 @@ triggers: {
 
 #### panel
 
-selector for an individual menu panel - usually one level of the menu
+selector for an individual menu panel - usually one level of the menu  
 default: .menu__panel
 
 #### panel_trigger_child
 
-selector for the trigger element that goes one level deeper
+selector for the trigger element that goes one level deeper  
 default: .menu__panel__trigger--child
 
 #### panel_trigger_parent
 
-selector for the trigger element that moves one level up
+selector for the trigger element that moves one level up  
 default: .menu__panel__trigger--parent
 
 #### panel_trigger_top
 
-selector for the trigger element that goes back to the top
+selector for the trigger element that goes back to the top  
 default: .menu__panel__trigger--top
 
 #### panel_title
 
-selector for the title for a panel
+selector for the title for a panel  
 default: .menu__panel__title
 
 #### panels_container
 
-selector for container that holds multiple panels. This should be your top-level selector.
+selector for container that holds multiple panels. This should be your top-level selector.  
 default: .traversable-menu
 
 #### menu_item_active
 
-selector for the currently active link, i.e. the page the user is on
+selector for the currently active link, i.e. the page the user is on  
 default: .menu__item--active
 
 #### menu_item_active_trail
 
-selector for whether the current link is part of the active menu trail
+selector for whether the current link is part of the active menu trail  
 default: .menu__item--active-trail
 
 #### menu_item
 
-selector for an individual menu item (almost always an li tag)
+selector for an individual menu item (almost always an li tag)  
 default: .menu__item
 
 #### menu_item_link
 
-selector for the actual menu item link (almost always an a tag)
+selector for the actual menu item link (almost always an a tag)  
 default: .menu__item__link
 
 #### tabbable_elements
 
-Tabbing will be disabled on elements matching this selector when the menu panel is closed
+Tabbing will be disabled on elements matching this selector when the menu panel is closed  
 default: a
 
 ### Additional options:
