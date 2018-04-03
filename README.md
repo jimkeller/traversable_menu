@@ -142,6 +142,8 @@ default: .menu__item__link
 Tabbing will be disabled on elements matching this selector when the menu panel is closed
 default: a
 
+### Additional options:
+
 ```
     classes: {
       'panels_initialized': 'traversable-menu--initialized', //class to set on top-level container after menu is initialized
