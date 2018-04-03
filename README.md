@@ -1,6 +1,6 @@
 [traversable_menu_screenshot]: https://jimkeller.github.io/traversable_menu/traversable_menu.gif
 
-# Traversable Navigation Menu
+# Sliding Navigation Menu
 A sliding multi-level navigation drawer menu written using vanilla javascript
 
 ![Traversable menu example][traversable_menu_screenshot]
