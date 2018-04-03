@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2017 Jim Keller, Eastern Standard
+ */
+
 
 /***
 *  @function: TraversableMenu
