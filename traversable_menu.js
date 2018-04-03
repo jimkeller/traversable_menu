@@ -5,12 +5,24 @@
 ***/
 function TraversableMenu( options ) {
 
+  var success = true;
+  var callback = null;
+  var callback_params = { traversable_menu: this };
+
   try {
     options = options || {};
 
     this.options = options;
     this.menu_item_index = 0;
-    this.panelsInitialize();
+
+    //
+    // Fire 'before' initialize callback
+    //
+    if ( callback = this.option('callbacks.panels.initialize.before') ) {
+      callback.call(this, callback_params);
+    }
+
+    success = this.panelsInitialize();
     this.panelsHeightStore();
 
     var panel_auto_activated = false;
@@ -29,7 +41,7 @@ function TraversableMenu( options ) {
         var topmost_panel      = this.childPanelGet(panels_container); //get the first panel
 
         if ( topmost_panel ) {
-          this.panelActivate(topmost_panel);
+          this.panelActivate(topmost_panel, { 'show_immediate': true });
         }
       }
 
@@ -48,12 +60,26 @@ function TraversableMenu( options ) {
 
   }
   catch( e ) {
-    if ( typeof(console) !== 'undefined' && typeof(console.log) !== 'undefined') {
-      console.log( "Error initializing traversable menu");
-      console.log(e.message);
+
+    success = false;
+
+    if ( typeof(console) !== 'undefined' && typeof(console.error) !== 'undefined') {
+      console.error( "Error initializing traversable menu");
+      console.error(e.message);
+      console.error(e);
     }
   }
+  finally {
 
+    //
+    // Fire 'after' initialize callback
+    //
+    callback_params.success = success;
+    if ( callback = this.option('callbacks.panels.initialize.after') ) {
+      callback.call(this, callback_params);
+    }
+
+  }
 }
 
 TraversableMenu.prototype.resizeHandler = function( ) {
@@ -136,6 +162,7 @@ TraversableMenu.prototype.panelsInitialize = function() {
 
   try {
 
+    var success = true;
     var panels_container = this.panelsGetContainer();
 
     if ( panels_container ) {
@@ -153,10 +180,15 @@ TraversableMenu.prototype.panelsInitialize = function() {
       panels_container.classList.add( this.option('classes.panels_initialized') );
     }
     else {
-      if ( !this.option('errors.silent_if_no_container') ) {
-        throw "Could not get panels container. Check your container selector, which is set to: " + this.option('selectors.panels_container').toString();
-      }
+      success = false;
     }
+
+    if ( !this.option('errors.silent_if_no_container') ) {
+      throw "Could not get panels container. Check your container selector, which is set to: " + this.option('selectors.panels_container').toString();
+    }    
+
+    return success;
+
   }
   catch(e) {
     throw e;
@@ -186,6 +218,7 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     panel.setAttribute( 'data-panel-index', this.menu_item_index.toString() );
     panel.setAttribute( 'role', this.option('accessibility.panel_role') );
     this.panelIDSetByDepthIndex( panel, depth, this.menu_item_index );
+    this.panelActiveAttributesRemove( panel ); //Assume inactive to start; will be activated later
 
     // if ( this.option('panel_height_auto') ) {
     //   this.panelApplyCalculatedHeight( panel );
@@ -661,10 +694,10 @@ TraversableMenu.prototype.panelsResetActive = function( options ) {
 
     options = options || {};
 
-    var all_panels = this.panelsGetAll();
+    var active_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active')) ); //this.panelsGetAll();
 
-    for ( var i = 0; i < all_panels.length; i++ ) {
-      this.panelActiveAttributesRemove( all_panels[i] );
+    for ( var i = 0; i < active_panels.length; i++ ) {
+      this.panelActiveAttributesRemove( active_panels[i] );
     }
   }
   catch (e) {
@@ -796,15 +829,18 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
 
   if ( !this.panelIsActive(panel) ) {
 
-    this.panelsResetActive();
-
     //
     // Show this panel
     //
     if ( show_immediate ) {
-        panel.classList.add( this.option('classes.panel_show_immediate') );
+        this.debug('showing immediately');
+        var panels = this.panelsGetAll();
+        for( var j = 0; j < panels.length; j++ ) {
+          panels[j].classList.add( this.option('classes.panel_show_immediate') );
+        }
     }
 
+    this.panelsResetActive();
 
     //@TODO replace li with selector
     //$(panel).parent('li').addClass( this.option('classes').panel_child_open );
@@ -839,11 +875,14 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
       );
     }
 
-    window.requestAnimationFrame(
-      function() {
-        panel.classList.remove( me.option('classes.panel_show_immediate') );
+    if ( show_immediate ) {
+      var immediate_panels = me.elementFindAll ( TraversableMenu.selectorFromClassName(me.option('classes.panel_show_immediate')) );
+      var i;
+
+      for( i = 0; i < immediate_panels.length; i++ ) {
+        immediate_panels[i].classList.remove( me.option('classes.panel_show_immediate') );
       }
-    );
+    }
   }
 
 }
@@ -970,11 +1009,11 @@ TraversableMenu.prototype.activeTrailRecalculate = function() {
   try {
 
     var active_panel = this.panelGetActive();
-    var all_panels = this.panelsGetAll();
+    var active_trail_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active_trail')) ); //this.panelsGetAll();
 
-    if ( all_panels ) {
-      for ( var i = 0; i < all_panels.length; i++ ) {
-        this.panelActiveTrailUnset(all_panels[i]);
+    if ( active_trail_panels ) {
+      for ( var i = 0; i < active_trail_panels.length; i++ ) {
+        this.panelActiveTrailUnset(active_trail_panels[i]);
       }
 
       if ( active_panel ) {
@@ -1044,7 +1083,7 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
   }
 }
 
-TraversableMenu.prototype.selectorFromClassName = function( class_name ) {
+TraversableMenu.selectorFromClassName = function( class_name ) {
   return '.' + class_name.toString();
 }
 
@@ -1117,6 +1156,10 @@ TraversableMenu.prototype.tabbablesToggle = function( which_element, action, opt
 
     options = options || {};
     var tabindex = ( action == true ) ? '0' : '-1';
+
+    if ( typeof(options.exclude_self) == 'undefined' || !options.exclude_self ) {
+      which_element.setAttribute('tabindex', tabindex);
+    }
 
     this.onlyThisPanel( which_element,
       function( child ) {
@@ -1237,9 +1280,20 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
   if ( element ) {
 
     var children = TraversableMenu.immediateChildren(element);
+    var child_style;
 
     for( var i = 0; i < children.length; i++ ) {
-      height += parseInt(children[i].scrollHeight);
+
+      child_style = window.getComputedStyle(children[i]);
+
+      height += parseInt(children[i].scrollHeight); 
+
+      if ( child_style ) {
+        height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //scrollHeight doesn't include margins
+        height += ( child_style.marginBottom != '' ) ? parseInt(child_style.marginBottom) : 0; 
+        height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; //scrollHeight doesn't include borders
+        height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
+      }
     }
 
   }
@@ -1286,6 +1340,24 @@ TraversableMenu.options_default = function() {
       'panel_role': 'menu',
       'menu_item_role': 'menuitem',
       'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown using keyboard
+    },
+    callbacks: {
+      panel: {
+        activate: {
+          before: null,
+          after: null
+        },
+        initialize: {
+          before: null,
+          after: null
+        }
+      },
+      panels: {
+        initialize: {
+          before: null,
+          after: null
+        }
+      }
     },
     'debug': false,
     'panel_auto_scroll_to_top': true,
