@@ -1,5 +1,7 @@
 /*
+ * Version 1.0.0
  * Copyright (c) 2017 Jim Keller, Eastern Standard
+ * https://www.easternstandard.com
  */
 
 
