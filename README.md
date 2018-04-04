@@ -19,9 +19,9 @@ https://www.easternstandard.com
 
 ## How to use
 
-(npm package possibly coming soon...help welcome!)
+1. If using npm, simply run "npm install traversable_menu". Otherwise, add [traversable_menu.css](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.css) and [traversable_menu.js](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.js) to your project
 
-1. Add [traversable_menu.css](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.css) and [traversable_menu.js](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.js) to your project
+
 2. Add the markup for your menu:
 ```
 <div class="traversable-menu">
