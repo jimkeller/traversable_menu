@@ -19,9 +19,9 @@ https://www.easternstandard.com
 
 ## How to use
 
-(npm package possibly coming soon...help welcome!)
+1. If using npm, simply run "npm install traversable_menu". Otherwise, add [traversable_menu.css](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.css) and [traversable_menu.js](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.js) to your project
 
-1. Add [traversable_menu.css](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.css) and [traversable_menu.js](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.js) to your project
+
 2. Add the markup for your menu:
 ```
 <div class="traversable-menu">
@@ -141,54 +141,211 @@ default: .menu__item__link
 Tabbing will be disabled on elements matching this selector when the menu panel is closed  
 default: a
 
-### Additional options:
+### classes
+
+#### panels_initialized
+
+class to set on top-level container after menu is initialized  
+default: traversable-menu--initialized
+
+#### panel_active
+
+class that gets set on a panel when it is actively displayed  
+default: menu__panel--active
+
+#### panel_active_trail
+
+class that gets set on any panel that's in the active trail  
+default: menu__panel--active-trail
+
+#### panel_child_open
+
+class that is set on any panel that is a parent of the current panel  
+default: menu__panel--child-open
+
+#### panel_show_immediate
+
+class to set when a panel should be shown immediately, rather than animating in  
+default: -show-immediat
+
+#### panel_depth
+
+class to set on each panel that tells you the depth. [:n:] is replaced with the depth of the panel  
+default: menu__panel--depth-[:n:]
+
+### triggers
+
+#### parent_text
+
+text to be set on the panel_trigger_parent. [:previous-title:] is automatically replaced with the parent menu's title  
+default: Up to [:previous-title:] menu
+
+#### top_text
+
+text to be set on the "up to top" trigger  
+type: string  
+default: Up to Main Menu
+
+#### top_depth
+
+the depth at which to start showing 'up to main menu' link  
+type: integer  
+default: 2
+
+#### top_remove_auto
+
+whether to automatically remove 'up to main menu' link if the depth is less than triggers.top_depth  
+type: boolean  
+default: true
+
+#### top_text_use_top_panel_title_at_first_level
+
+if panel_title_first is set, use that as our "top_text" at the first level below the topmost panel  
+type: boolean  
+default: false
+
+### accessibility
+
+#### container_role
+
+the role attribute to set on the panel container  
+type: string  
+default: menubar
+
+#### panel_role
+
+the role attribute to set on an individual panel  
+type: string  
+default: menu
+
+#### menu_item_role
+
+the role attribute to set on a menu item  
+type: string  
+default: menuitem
+
+#### menu_item_link_focus_first
+
+set focus to first menu item link when panel is shown using keyboard  
+type: boolean  
+default: true 
+
+### callbacks
+
+#### panels.initialize.before
+
+called before the panels are initialized. Passes the TraversableMenu object to the function as a parameter  
+type: function  
+default: none
+
+#### panels.initialize.after
+
+called after the panels are initialized. Passes the TraversableMenu object to the function as a parameter  
+type: function  
+default: none
+
+### debug
+
+set to true to see debug messages  
+default: false
+
+### panel_auto_scroll_to_top
+
+whether to automatically scroll to the top of the panel (so that the user doesn't land in the middle of a child panel)  
+type: boolean  
+default: true
+
+### panel_height_auto
+
+hether to automatically determine the height of each individual panel  
+
+type: boolean  
+default: true
+
+### panels_container_height_auto
+
+whether to automatically set the panel container height  
+type: boolean
+default: true
+
+### panel_slide_animation_duration
+
+The duration of the "slide" animation in milliseconds. Should match your CSS.  
+type: integer  
+default: 350
+
+### panel_title_first
+
+the title of the first panel  
+type: string  
+default: none
+
+### panel_title_text
+
+title of subsequent panels. [:menu-title:] will be replaced by the text of the link that expands to show the menu  
+type: string  
+default: [:menu-title:] 
+
+
+### auto_traverse_to_active
+
+whether to automatically traverse (on initialize) to the menu item identified by the menu_item_active selector above  
+type: boolean  
+default: true
+
+### auto_traverse_skip_levels
+
+by default, auto traverse shows siblings of the current page. Increase this number to have it automatically traverse deeper  
+
+type: integer
+default: 0
+
+### errors
+
+#### silent_if_no_container
+
+hide errors if no panel container is found  
+type: boolean  
+default: true
+
+## Options Usage Example
+
+The below is just for a visual guide as to how the options are nested. The values here are just for example purposes, you almost certainly don't want to use them.
 
 ```
-    classes: {
-      'panels_initialized': 'traversable-menu--initialized', //class to set on top-level container after menu is initialized
-      'panel_active': 'menu__panel--active', //class that gets set on a panel when it is actively displayed
-      'panel_active_trail': 'menu__panel--active-trail', //class that gets set on any panel that's in the active trail
-      'panel_active_parent': 'menu__panel--active-parent', //currently unused
-      'panel_child_open': 'menu__panel--child-open', //class that is set on any panel that is a parent of the current panel
-      'panel_show_immediate': '-show-immediate', //class to set when a panel should be shown immediately, rather than animating in
-      'panel_depth': 'menu__panel--depth-[:n:]' //class to set on each panel that tells you the depth. [:n:] is replaced with the depth of the panel
-
-    },
-    triggers: {
-      'parent_text': 'Up to [:previous-title:] menu', //text to be set on the panel_trigger_parent. [:previous-title:] is automatically replaced with the parent menu's title
-      'top_text': 'Up to Main Menu', //text to be set on panel_trigger_top
-      'top_depth': 2, //the depth at which to start showing 'up to main menu' link
-      'top_remove_auto': true, //whether to automatically remove 'up to main menu' link if the depth < triggers.top_depth
-      'top_text_use_top_panel_title_at_first_level': false //if panel_title_first is set, use that as our "top_text" at the first level below the topmost panel
-    },
-    accessibility: {
-      'container_role': 'menubar', //the role attribute to set on the panel container
-      'panel_role': 'menu', //the role attribute to set on an individual panel
-      'menu_item_role': 'menuitem', //the role attribute to set on a menu item
-      'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown using keyboard
-    },
-    callbacks: {
-      panels: {
-        initialize: {
-          before: null, //called before the panels are initialized. Passes the TraversableMenu object to the function as a parameter
-          after: null //called after the panels are initialized. Passes the TraversableMenu object to the function as a parameter
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var traversable = new TraversableMenu(
+    {
+      selectors: {
+        'panel': '.my-menu-panel-selector', 
+        'panels_container': '#my-menu-panels'
+      },
+      classes: {
+        'panel_active': '.active'
+      },
+      triggers: {
+        'parent_text': 'Click to see the [:previous-title] menu'
+      },
+      accessibility: {
+        'container_role': 'menubar'
+      },
+      callbacks: {
+        panels {
+          initialize {
+            after: function( traversable_menu_obj ) {
+              //perhaps do something here after the panels are initialized
+            }
+          }
         }
       }
-    },
-    'debug': false, //set to true to see debug messages
-    'panel_auto_scroll_to_top': true, //whether to automatically scroll to the top of the panel (so that the user doesn't land in the middle of a child panel)
-    'panel_height_auto': true, //whether to automatically determine the height of each individual panel
-    'panels_container_height_auto': true, //whether to automatically set the panel container height
-    'panel_slide_animation_duration': 350, //in ms
-    'panel_title_first': '', //the title of the first panel
-    'panel_title_text': '[:menu-title:]', //title of subsequent panels. [:menu-title:] will be replaced by the text of the link that expands to show the menu
-    'auto_traverse_to_active': true, //whether to automatically traverse to the menu item identified by the menu_item_active selector above
-    'auto_traverse_skip_levels': 0, //by default, auto traverse shows siblings of the current page. Increase this number to have it automatically traverse deeper
-    'siblings_at_lowest_level': false, //currently unused
-    'errors': {
-      'silent_if_no_container': true //hide errors if no panel container is found
+      'panel_title_first': 'Traversable Menu Example'
+        // many additional options here; see below 
     }
-  };
+  );
+});
+</script>
+```
 
 
 
