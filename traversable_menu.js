@@ -1,5 +1,4 @@
 /*
- * Version 1.0.0
  * Copyright (c) 2017 Jim Keller, Eastern Standard
  * https://www.easternstandard.com
  */
@@ -945,6 +944,8 @@ TraversableMenu.prototype.panelsContainerResize = function() {
     if ( height !== null ) {
       container.style.height = height.toString() + 'px';
     }
+
+    container.classList.add( this.option('classes.panels_container_height_auto_applied') );
   }
 
   return height;
@@ -962,11 +963,12 @@ TraversableMenu.prototype.panelActiveHeightApply = function ( ) {
 
     while ( parent_panel ) {
        parent_panel.style.height = new_height.toString() + 'px';
+       parent_panel.classList.add( this.option('classes.panel_height_auto_applied') );
        parent_panel = this.panelGetParent(parent_panel);
     }
 
     if ( this.option('panels_container_height_auto') ) {
-      this.panelsContainerResize();
+      this.panelsContainerResize();      
     }
 
   }
@@ -1331,8 +1333,9 @@ TraversableMenu.options_default = function() {
       'panel_active_parent': 'menu__panel--active-parent',
       'panel_child_open': 'menu__panel--child-open',
       'panel_show_immediate': '-show-immediate',
-      'panel_depth': 'menu__panel--depth-[:n:]'
-
+      'panel_depth': 'menu__panel--depth-[:n:]',
+      'panel_height_auto_applied': '-panel-height-auto',
+      'panels_container_height_auto_applied': '-panels-container-height-auto'
     },
     triggers: {
       'parent_text': 'Up to [:previous-title:] menu',
