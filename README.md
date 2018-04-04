@@ -6,7 +6,6 @@ Use basic HTML, javascript, and CSS to create a tiered navigation suitable for n
 
 ![Traversable menu example][traversable_menu_screenshot]
 
-Version 1.0.0  
 Copyright (c) 2017 Jim Keller, Eastern Standard  
 https://www.easternstandard.com
 
