@@ -1,10 +1,9 @@
 {
   "name": "traversable_menu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A sliding multi-level navigation menu that is fully ADA compliant",
   "main": "traversable_menu.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jimkeller/traversable_menu.git"
@@ -15,5 +14,15 @@
     "url": "https://github.com/jimkeller/traversable_menu/issues"
   },
   "homepage": "https://github.com/jimkeller/traversable_menu#readme",
-  "keywords": ["megamenu", "menu", "mobile", "navigation", "drawer", "curtain", "panels", "submenu", "vanilla"]
+  "keywords": [
+    "megamenu",
+    "menu",
+    "mobile",
+    "navigation",
+    "drawer",
+    "curtain",
+    "panels",
+    "submenu",
+    "vanilla"
+  ]
 }
