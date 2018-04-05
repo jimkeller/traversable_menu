@@ -23,6 +23,9 @@
     "curtain",
     "panels",
     "submenu",
-    "vanilla"
+    "vanilla",
+    "slide-menu",
+    "push-menu",
+    "sliding"    
   ]
 }
