@@ -19,6 +19,8 @@ function TraversableMenu( options ) {
 
     this.options = options;
     this.menu_item_index = 0;
+    this.panel_active = '';
+    this.panels_active_trail = {};
 
     //
     // Fire 'before' initialize callback
@@ -183,6 +185,7 @@ TraversableMenu.prototype.panelsInitialize = function() {
       }
 
       panels_container.classList.add( this.option('classes.panels_initialized') );
+
     }
     else {
       success = false;
@@ -742,11 +745,16 @@ TraversableMenu.prototype.panelsResetActive = function( options ) {
 
     options = options || {};
 
-    var active_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active')) ); //this.panelsGetAll();
-
-    for ( var i = 0; i < active_panels.length; i++ ) {
-      this.panelActiveAttributesRemove( active_panels[i] );
+    if ( this.panel_active ) {
+      this.panelActiveAttributesRemove( this.panel_active );
+      this.panel_active = null;
     }
+
+    // var active_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active')) ); //this.panelsGetAll();
+
+    // for ( var i = 0; i < active_panels.length; i++ ) {
+    //   this.panelActiveAttributesRemove( active_panels[i] );
+    // }
   }
   catch (e) {
     throw e;
@@ -853,14 +861,21 @@ TraversableMenu.prototype.panelGetTriggerChild = function( panel ) {
   }
 }
 
+TraversableMenu.prototype.panelSetActive = function( panel ) {
+
+  this.panel_active = panel;
+  
+}
+
 TraversableMenu.prototype.panelGetActive = function() {
 
-  return this.elementFind( this.option('selectors.panel') + '.' + this.option('classes.panel_active') );
+  return this.panel_active;
+  //return this.elementFind( this.option('selectors.panel') + '.' + this.option('classes.panel_active') );
 
 }
 
 TraversableMenu.prototype.panelIsActive = function( panel ) {
-  return ( panel.classList.contains(this.option('classes.panel_active')) ) ? true : false;
+  return ( panel == this.panel_active ) ? true : false;
 }
 
 TraversableMenu.prototype.panelActivate = function( panel, options ) {
@@ -889,11 +904,7 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
     }
 
     this.panelsResetActive();
-
-    //@TODO replace li with selector
-    //$(panel).parent('li').addClass( this.option('classes').panel_child_open );
-    //let $parent_title = $(panel).parent('li').find( this.option('selectors').menu_item_link ).eq(0);
-
+    this.panelSetActive(panel);
     this.panelActiveAttributesApply( panel );
     this.activeTrailRecalculate();
 
@@ -931,6 +942,7 @@ TraversableMenu.prototype.panelActivate = function( panel, options ) {
         immediate_panels[i].classList.remove( me.option('classes.panel_show_immediate') );
       }
     }
+
   }
 
 }
@@ -980,7 +992,7 @@ TraversableMenu.prototype.panelsContainerResize = function() {
   var active_panel = this.panelGetActive();
   var height = null;
 
-  if ( container ) {
+  if ( container && active_panel ) {
 
     height = TraversableMenu.heightCalculateBasedOnImmediateChildren(active_panel);
 
@@ -1056,15 +1068,53 @@ TraversableMenu.prototype.panelActiveAttributesRemove = function( panel ) {
 
 }
 
+TraversableMenu.prototype.activeTrailPanelRemember = function( panel ) {
+  try {
+
+    this.panels_active_trail[ panel.getAttribute('id') ] = panel;    
+    
+  }
+  catch(e) {
+    throw e;
+  }
+
+}
+
+TraversableMenu.prototype.activeTrailPanelForget = function( panel ) {
+  try {
+
+    if ( typeof(this.panels_active_trail[panel.getAttribute('id')]) != 'undefined' ) {
+      delete this.panels_active_trail[panel.getAttribute('id')];
+    }
+    
+  }
+  catch(e) {
+    throw e;
+  }
+
+}
+
+TraversableMenu.prototype.activeTrailPanelsGet = function() {
+  try {
+
+    return this.panels_active_trail;
+    
+  }
+  catch(e) {
+    throw e;
+  }
+
+}
+
 TraversableMenu.prototype.activeTrailRecalculate = function() {
   try {
 
     var active_panel = this.panelGetActive();
-    var active_trail_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active_trail')) ); //this.panelsGetAll();
+    var active_trail_panels = this.activeTrailPanelsGet();
 
     if ( active_trail_panels ) {
-      for ( var i = 0; i < active_trail_panels.length; i++ ) {
-        this.panelActiveTrailUnset(active_trail_panels[i]);
+      for ( var panel_id in active_trail_panels ) {
+        this.panelActiveTrailUnset(active_trail_panels[panel_id]);        
       }
 
       if ( active_panel ) {
@@ -1096,10 +1146,11 @@ TraversableMenu.prototype.panelActiveTrailUnset = function( panel ) {
         trigger.setAttribute('aria-expanded', false);
       }
 
+      this.activeTrailPanelForget(panel);
 
-      if ( child_panel = this.childPanelGet(panel) ) {
-        this.panelActiveTrailUnset(child_panel);
-      }
+      // if ( child_panel = this.childPanelGet(panel) ) {
+      //   this.panelActiveTrailUnset(child_panel);
+      // }
 
 
   }
@@ -1121,11 +1172,14 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
       trigger.setAttribute('aria-expanded', true);
     }
 
+    this.activeTrailPanelRemember(panel);
 
     if ( panel_parent = this.panelGetParent(panel) ) {
-      panel_parent.classList.add( this.option('classes.panel_child_open') );
-      panel_parent.scrollTop = 0;
-      this.panelActiveTrailApply(panel_parent);
+      if ( !this.panelActiveTrailApplied(panel_parent) ) {
+        panel_parent.classList.add( this.option('classes.panel_child_open') );
+        panel_parent.scrollTop = 0;
+        this.panelActiveTrailApply(panel_parent);
+      }
     }
 
   }
@@ -1133,6 +1187,18 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
     throw e;
   }
 }
+
+TraversableMenu.prototype.panelActiveTrailApplied = function( panel ) {
+  try {
+
+    return panel.matches('.' + this.option('classes.panel_active_trail') );    
+
+  }
+  catch( e ) {
+    throw e;
+  }
+}
+
 
 TraversableMenu.selectorFromClassName = function( class_name ) {
   return '.' + class_name.toString();
