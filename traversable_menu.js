@@ -230,7 +230,7 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     // }
 
     if ( depth == 0 ) {
-      this.panelTitle( panel, this.option('panel_title_first') );
+      this.panelTitleTextSet( panel, this.option('panel_title_first') );
     }
 
     this.topTriggerInit( panel );
@@ -456,20 +456,21 @@ TraversableMenu.prototype.childTriggerInit = function( menu_item, panel ) {
   try {
     var me = this;
     var trigger = menu_item.querySelector( this.option('selectors.panel_trigger_child') );
-    var menu_item_link = menu_item.querySelector( this.option('selectors.menu_item_link') );
     var child_panel = menu_item.querySelector( this.option('selectors.panel') );
+
+    //var menu_item_link_text = menu_item_link.innerHTML;
 
     if ( typeof(trigger) !== 'undefined' && trigger ) {
 
       var panel_depth = child_panel.getAttribute('data-panel-depth');
       var panel_index = child_panel.getAttribute('data-panel-index');
-      var menu_item_link_text = menu_item_link.innerHTML;
+     
 
       this.triggerAttributesInit(trigger, child_panel, 'child');
 
       child_panel.setAttribute('data-panel-triggered-as-child-by', trigger.getAttribute('id') );
 
-      this.panelTitle( child_panel, menu_item_link_text );
+      this.panelTitleInit( child_panel, menu_item )
       this.panelTriggerEventHandler( trigger, child_panel );
 
     }
@@ -536,14 +537,56 @@ TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel, trig
 
 }
 
-TraversableMenu.prototype.panelTitle = function( panel, title ) {
+TraversableMenu.prototype.panelTitleTextSet = function( panel, title ) {
 
   try {
 
-    var title_element = panel.querySelector( this.option('selectors.panel_title') );
+    var title_element       = panel.querySelector( this.option('selectors.panel_title') );
+    var title_link          = null;
 
     if ( title_element ) {
+
+      if ( title_link = title_element.querySelector(this.option('classes.panel_title_link')) ) {
+        title_element = title_link;
+      }
+
       title_element.innerHTML = TraversableMenu.tokenReplace( this.option('panel_title_text'), 'menu-title', title );
+    }
+
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+TraversableMenu.prototype.panelTitleInit = function( panel, menu_item_element ) {
+
+  try {
+
+    var menu_item_link      = menu_item_element.querySelector( this.option('selectors.menu_item_link') );
+    var menu_item_link_text = menu_item_link.innerHTML;
+    var title_element       = panel.querySelector( this.option('selectors.panel_title') );
+    var title_href          = menu_item_link.getAttribute('href');
+    var title_html          = '';
+
+    //
+    // @TODO - this should have additional options and should probably use document.createElement
+    //
+    if ( this.option('panel_title_link_enabled') ) {
+      title_html = '<a class="' + this.option('classes.panel_title_link') + '" href="' + title_href + '">';
+    }
+
+    if ( title_element ) {
+      title_html += TraversableMenu.tokenReplace( this.option('panel_title_text'), 'menu-title', menu_item_link_text );
+    }
+
+    if ( this.option('panel_title_link_enabled') ) {
+      title_html += '</a>';
+    }
+
+    if ( title_element ) {
+      title_element.innerHTML = title_html;
     }
 
   }
@@ -1335,7 +1378,8 @@ TraversableMenu.options_default = function() {
       'panel_show_immediate': '-show-immediate',
       'panel_depth': 'menu__panel--depth-[:n:]',
       'panel_height_auto_applied': '-panel-height-auto',
-      'panels_container_height_auto_applied': '-panels-container-height-auto'
+      'panels_container_height_auto_applied': '-panels-container-height-auto',
+      'panel_title_link': 'menu__panel__title__link'
     },
     triggers: {
       'parent_text': 'Up to [:previous-title:] menu',
@@ -1375,6 +1419,7 @@ TraversableMenu.options_default = function() {
     'panel_slide_animation_duration': 350, //in ms
     'panel_title_first': '', //the title of the first panel
     'panel_title_text': '[:menu-title:]', //title of subsequent panels. [:menu-title:] will be replaced by the text of the link that expands to show the menu
+    'panel_title_link_enabled': true,
     'auto_traverse_to_active': true,
     'auto_traverse_skip_levels': 0,
     'siblings_at_lowest_level': false,
