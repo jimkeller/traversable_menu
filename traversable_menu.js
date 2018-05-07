@@ -587,6 +587,7 @@ TraversableMenu.prototype.panelTitleInit = function( panel, menu_item_element ) 
 
     if ( title_element ) {
       title_element.innerHTML = title_html;
+      title_element.href = title_href;
     }
 
   }
