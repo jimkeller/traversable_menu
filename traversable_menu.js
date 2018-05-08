@@ -718,13 +718,9 @@ TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
         pathname_with_query_string,                        
       ];
 
-      console.log( 'valid urls', valid_urls );
-
       for ( var i = 0; i < valid_urls.length; i++ ) {
 
         found_links = this.elementFindAll( '[href="' + valid_urls[i] + '"]' );
-
-        console.log( 'found links', found_links );
 
         if ( found_links.length > 0 ) {
           for ( var j = 0; j < found_links.length; j++ ) {
@@ -733,7 +729,6 @@ TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
             this_node = found_links[j];
             while ( parent_count > 0 ) {
               if ( this_node.matches(this.option('selectors.menu_item')) ) {
-                console.log( 'found node', this_node );
                 active_items.push( this_node );
                 break;
               }
