@@ -701,10 +701,13 @@ TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
       // Find active item by looking at the current url
       //
       var valid_urls;
-      var found_links;
+      var found_links = new Array();
+      var cur_links;
       var parent_count;
       var this_node;
       var pathname_with_query_string = window.location.href;
+      var link_selectors_additional;
+      var i;
 
       pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
       pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
@@ -715,18 +718,33 @@ TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
       valid_urls = [
         window.location.pathname,
         window.location.href,
-        pathname_with_query_string,                        
+        pathname_with_query_string
       ];
 
-      for ( var i = 0; i < valid_urls.length; i++ ) {
+      //
+      // Also check to see if additional selectors were set in our options
+      //
+      for ( i = 0; i < valid_urls.length; i++ ) {
+        found_links.push( this.elementFindAll('[href="' + valid_urls[i] + '"]') );
+      }
 
-        found_links = this.elementFindAll( '[href="' + valid_urls[i] + '"]' );
+      if ( this.option('auto_traverse_link_selectors_active') ) {
 
-        if ( found_links.length > 0 ) {
-          for ( var j = 0; j < found_links.length; j++ ) {
+        link_selectors_additional = this.option('auto_traverse_link_selectors_active');
+
+        for ( i = 0; i < link_selectors_additional.length; i++ ) {
+          found_links.push( this.elementFindAll(link_selectors_additional[i]) );
+        }
+      }
+
+      for ( i = 0; i < found_links.length; i++ ) {
+
+        cur_links = found_links[i];
+        if ( cur_links.length > 0 ) {
+          for ( var j = 0; j < cur_links.length; j++ ) {
             parent_count = 3; //max attempts to find parent
 
-            this_node = found_links[j];
+            this_node = cur_links[j];
             while ( parent_count > 0 ) {
               if ( this_node.matches(this.option('selectors.menu_item')) ) {
                 active_items.push( this_node );
@@ -1541,6 +1559,7 @@ TraversableMenu.options_default = function() {
     'auto_traverse_to_active': true,
     'auto_traverse_skip_levels': 0,
     'auto_traverse_by_url': false,
+    'auto_traverse_link_selectors_active': [],
     'siblings_at_lowest_level': false,
     'errors': {
       'silent_if_no_container': true
