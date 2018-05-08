@@ -233,6 +233,7 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     // }
 
     if ( depth == 0 ) {
+      this.panelSetActive( panel );
       this.panelTitleTextSet( panel, this.option('panel_title_first') );
     }
 
@@ -684,18 +685,76 @@ TraversableMenu.prototype.elementFindAll = function( selector ) {
 TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
 
   try {
-    var active_items;
+    var active_items = new Array();
     var active_panel;
+    var active_link;
     var child_panel;
     var last_active_item;
+
 
     //
     // See if we can find the deepest instance of the menu_item_currently_active selector
     //
-    active_items = this.elementFindAll( this.option('selectors.menu_item_active') );
+    if ( this.option('auto_traverse_by_url') ) {
+
+      //
+      // Find active item by looking at the current url
+      //
+      var valid_urls;
+      var found_links;
+      var parent_count;
+      var this_node;
+      var pathname_with_query_string = window.location.href;
+
+      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
+      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
+
+      //
+      // Make sure these are in order of least to most favorable/specific
+      //
+      valid_urls = [
+        window.location.pathname,
+        window.location.href,
+        pathname_with_query_string,                        
+      ];
+
+      console.log( 'valid urls', valid_urls );
+
+      for ( var i = 0; i < valid_urls.length; i++ ) {
+
+        found_links = this.elementFindAll( '[href="' + valid_urls[i] + '"]' );
+
+        console.log( 'found links', found_links );
+
+        if ( found_links.length > 0 ) {
+          for ( var j = 0; j < found_links.length; j++ ) {
+            parent_count = 3; //max attempts to find parent
+
+            this_node = found_links[j];
+            while ( parent_count > 0 ) {
+              if ( this_node.matches(this.option('selectors.menu_item')) ) {
+                console.log( 'found node', this_node );
+                active_items.push( this_node );
+                break;
+              }
+              this_node = this_node.parentNode;
+              parent_count--;
+            }
+          }
+        }
+      }
+
+    }
+    else {
+      active_items = this.elementFindAll( this.option('selectors.menu_item_active') );
+    }
 
     if ( active_items && active_items.length > 0 ) {
       last_active_item = active_items[ active_items.length - 1 ];
+      last_active_item.classList.add( TraversableMenu.classNameFromSelector(this.option('selectors.menu_item_active')) );
+
+      active_link = last_active_item.querySelector( this.option('selectors.menu_item_link') );
+      active_link.classList.add( this.option('classes.menu_item_link_active') );
 
       active_panel = this.panelByChildElement(last_active_item);
 
@@ -745,16 +804,13 @@ TraversableMenu.prototype.panelsResetActive = function( options ) {
 
     options = options || {};
 
-    if ( this.panel_active ) {
-      this.panelActiveAttributesRemove( this.panel_active );
-      this.panel_active = null;
+    var active_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active')) ); //this.panelsGetAll();
+
+    for ( var i = 0; i < active_panels.length; i++ ) {
+      this.panelActiveAttributesRemove( active_panels[i] );
     }
 
-    // var active_panels = this.elementFindAll( TraversableMenu.selectorFromClassName(this.option('classes.panel_active')) ); //this.panelsGetAll();
-
-    // for ( var i = 0; i < active_panels.length; i++ ) {
-    //   this.panelActiveAttributesRemove( active_panels[i] );
-    // }
+    this.panel_active = null;
   }
   catch (e) {
     throw e;
@@ -1445,7 +1501,8 @@ TraversableMenu.options_default = function() {
       'panel_depth': 'menu__panel--depth-[:n:]',
       'panel_height_auto_applied': '-panel-height-auto',
       'panels_container_height_auto_applied': '-panels-container-height-auto',
-      'panel_title_link': 'menu__panel__title__link'
+      'panel_title_link': 'menu__panel__title__link',
+      'menu_item_link_active': 'menu__item__link--active'
     },
     triggers: {
       'parent_text': 'Up to [:previous-title:] menu',
@@ -1488,6 +1545,7 @@ TraversableMenu.options_default = function() {
     'panel_title_link_enabled': true,
     'auto_traverse_to_active': true,
     'auto_traverse_skip_levels': 0,
+    'auto_traverse_by_url': false,
     'siblings_at_lowest_level': false,
     'errors': {
       'silent_if_no_container': true
