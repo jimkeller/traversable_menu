@@ -46,7 +46,6 @@ function TraversableMenu( options ) {
 
       if ( panels_container ) {
         var topmost_panel      = this.childPanelGet(panels_container); //get the first panel
-
         if ( topmost_panel ) {
           this.panelActivate(topmost_panel, { 'show_immediate': true });
         }
@@ -233,7 +232,6 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     // }
 
     if ( depth == 0 ) {
-      this.panelSetActive( panel );
       this.panelTitleTextSet( panel, this.option('panel_title_first') );
     }
 
@@ -1110,6 +1108,7 @@ TraversableMenu.prototype.panelActiveAttributesApply = function( panel ) {
     panel.classList.add( this.option('classes.panel_active') );
     panel.setAttribute('aria-hidden', 'false');
     panel.setAttribute('tabindex', '0');
+    panel.setAttribute('data-panel-active', true);
     panel.scrollTop = 0;
 
     this.panelActiveTrailApply(panel);
@@ -1126,6 +1125,7 @@ TraversableMenu.prototype.panelActiveAttributesRemove = function( panel ) {
     panel.classList.remove( this.option('classes.panel_active') );
     panel.setAttribute('aria-hidden', 'true');
     panel.setAttribute('tabindex', '-1');
+    panel.setAttribute('data-panel-active', false);
 
     this.tabbablesToggle( panel, false );
 
