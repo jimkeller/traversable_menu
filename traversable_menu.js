@@ -19,8 +19,11 @@ function TraversableMenu( options ) {
 
     this.options = options;
     this.menu_item_index = 0;
+    this.menu_item_active = null;
     this.panel_active = '';
     this.panels_active_trail = {};
+    this.panels_container = null;
+    this.depth_max_canonical = null;
 
     //
     // Fire 'before' initialize callback
@@ -136,7 +139,17 @@ TraversableMenu.prototype.option = function ( key, val ) {
 
 TraversableMenu.prototype.panelsGetContainer = function() {
   try {
-    return window.document.querySelector( this.option('selectors.panels_container') );
+    
+    if ( !this.panels_container ) {
+      if ( this.option('render.panels_container') ) {
+        this.panels_container = this.option('render.panels_container');
+      }
+      else {
+        this.panels_container = window.document.querySelector( this.option('selectors.panels_container') );   
+      }      
+    }
+
+    return this.panels_container;
   }
   catch(e) {
     throw e;
@@ -175,6 +188,46 @@ TraversableMenu.prototype.panelsInitialize = function() {
       panels_container.setAttribute( 'role', this.option('accessibility.container_role') );
 
       //
+      // If we're looking to set a max depth relative to the active item, do it now
+      //
+      if ( this.depth_max_canonical === null ) {
+        if ( this.option('render.depth_max_relative') !== null ) {
+          this.menu_item_active = this.activeMenuItemFind();
+          var depth_max_relative_index = ( this.option('render.depth_max_relative') == 0 ) ? this.option('render.depth_max_relative') : this.option('render.depth_max_relative') - 1;
+
+          if ( this.menu_item_active ) {
+            var search_parent = this.menu_item_active.parentNode;
+            var active_depth = 0;
+            //  
+            // Find out how deep the active item is by scanning the DOM, since nothing has
+            // been initialized yet
+            //
+            while ( search_parent && search_parent !== document ) {
+
+              if ( search_parent.matches(this.option('selectors.panel')) ) {
+                active_depth++;
+              }
+
+              search_parent = search_parent.parentNode;
+            }
+
+            this.depth_max_canonical = active_depth + depth_max_relative_index;
+
+            if ( this.childPanelGet(this.menu_item_active) ) {
+              this.depth_max_canonical += this.option('auto_traverse_skip_levels');
+            }
+
+          }
+        }
+        else {
+          this.depth_max_canonical = this.option('depth_max');
+        }
+      }
+      else {
+          this.depth_max_canonical = this.option('depth_max');
+      }
+
+      //
       // Initialize menu panels
       //
       var child_panel      = this.childPanelGet(panels_container);
@@ -208,6 +261,7 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
 
     options = options || {}
 
+    var continue_recurse = true;
     var child_panel;
     var panel_trigger;
     var menu_item;
@@ -243,14 +297,15 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
 
     if ( parent_menu_item ) {
 
-      parent_menu_item_link = parent_menu_item.querySelector( this.option('selectors.menu_item_link') );
+      if ( parent_menu_item_link = parent_menu_item.querySelector(this.option('selectors.menu_item_link')) ) {
 
-      //
-      // Remember the link text that triggers this panel,
-      // So we can say 'up to X menu' later
-      //
-      panel.setAttribute('data-parent-link-text', parent_menu_item_link.innerHTML );
-      this.parentTriggerInit(parent_menu_item, panel);
+        //
+        // Remember the link text that triggers this panel,
+        // So we can say 'up to X menu' later
+        //
+        panel.setAttribute('data-parent-link-text', parent_menu_item_link.innerHTML );
+        this.parentTriggerInit(parent_menu_item, panel);
+      }
     }
 
     //
@@ -264,27 +319,40 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
       // Keep a rolling count of all the menu items all the way down the panels, so we can create unique IDs
       //
       this.menu_item_index ++;
-
       this.menuItemInit(menu_items[i]);
 
       child_panel = this.childPanelGet(menu_items[i]);
 
       if ( child_panel ) {
 
-        //
-        // Recursively call panelInitialize on the child panel
-        //
-        depth++;
-        this.panelInitialize( child_panel, depth, { panel_parent: panel, parent_menu_item: menu_items[i] } );
-        depth--;
+        depth++;        
 
-        //
-        // Initialize child triggers
-        //
-        this.childTriggerInit(menu_items[i], panel);
+        if ( this.depth_max_canonical === null || depth <= this.depth_max_canonical ) {
+            //
+            // Recursively call panelInitialize on the child panel
+            //            
+            var ret = this.panelInitialize( child_panel, depth, { panel_parent: panel, parent_menu_item: menu_items[i] } );
+            depth--;  
+          
+            //
+            // Initialize child triggers
+            //
+            this.childTriggerInit(menu_items[i], panel);
+        }
+        else {
+          //
+          // We've hit max depth
+          //
+          var child_trigger = menu_items[i].querySelector( this.option('selectors.panel_trigger_child') );
 
+          menu_items[i].removeChild(child_panel);
+
+          if ( child_trigger ) {
+            child_trigger.parentNode.removeChild(child_trigger);
+          }
+
+        }
       }
-
 
 
     }
@@ -295,6 +363,129 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     throw e;
   }
 }
+
+TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
+  try {
+    
+    var menu_link;
+
+    if ( menu_item.classList.contains(this.option('classes.menu_item_active')) ) {
+      return true;
+    }
+
+    if ( menu_link = menu_item.querySelector(this.option('selectors.menu_item_link')) ) {
+      var url_selectors = this.activeLinkSelectors();
+
+      for( var i = 0; i < url_selectors.length; i++ ) {
+        if ( menu_link.matches(url_selectors[i]) ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+TraversableMenu.prototype.activeURLsGet = function() {
+  try {
+
+      var active_urls = [];
+      var href_split = window.location.href.split('#');
+      var pathname_with_query_string = window.location.href;
+      
+      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
+      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
+
+      //
+      // Make sure these are in order of most to least favorable/specific;
+      // Matching is done on a first-match basis
+      //
+      active_urls = [
+        pathname_with_query_string,
+        window.location.pathname,
+        window.location.href
+      ];
+
+      //
+      // Additional possible permutations of URL
+      //      
+      if ( href_split.length > 1 ) {
+        active_urls.push( href_split[0] ); //URL without fragment
+
+        href_split = href_split[0].split('?');
+        if ( href_split.length > 1 ) {
+          active_urls.push( href_split[0] ); //URL without fragment or query string
+        }
+      }
+
+      href_split = window.location.href.split('?');
+      if ( href_split.length > 1 ) {
+        active_urls.push( href_split[0] ); //URL without query string
+      }
+
+      return active_urls;        
+  }
+  catch( e ) {
+    throw e;
+  }
+}
+
+
+TraversableMenu.prototype.activeURLSelectors = function() {
+  try {
+
+      var selectors = [];
+      var valid_urls = this.activeURLsGet();
+
+      for ( var i = 0; i < valid_urls.length; i++ ) {
+        selectors.push( '[href="' + valid_urls[i] + '"]' );
+      }
+
+      return selectors;
+
+
+  }
+  catch( e ) {
+    throw e;
+  }
+}
+
+TraversableMenu.prototype.activeLinkSelectors = function() {
+  try {
+
+      var selectors = [];
+
+      selectors.push( this.option('selectors.menu_item_link_active') );
+
+      if ( this.option('active.find_by_url') ) {
+        selectors = selectors.concat( selectors, this.activeURLSelectors() );
+      }
+
+      if ( this.option('active.selectors_additional') ) {
+
+        var link_selectors = this.option('active.selectors_additional');
+
+        for ( var i = 0; i < link_selectors.length; i++ ) {
+          selectors.push( link_selectors[i] );
+        }
+      }
+
+      return selectors;
+
+
+  }
+  catch( e ) {
+    throw e;
+  }
+}
+
+
+
 
 TraversableMenu.prototype.menuItemInit = function( menu_item ) {
   try {
@@ -613,6 +804,18 @@ TraversableMenu.prototype.childPanelGet = function( container ) {
   }
 }
 
+TraversableMenu.prototype.childPanelsGet = function( container ) {
+  try {
+
+    return ( container ) ? container.querySelectorAll( this.option('selectors.panel') ) : null;
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+
 /**
  * Returns the immediate child menu items of the container element
  * @param {DomElement} container the DomElement of the panels container
@@ -680,110 +883,104 @@ TraversableMenu.prototype.elementFindAll = function( selector ) {
 * @param none
 * @return true if an active menu panel was found, false otherwise
 */
-TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
+TraversableMenu.prototype.activeMenuItemFind = function() {
 
   try {
-    var active_items = new Array();
-    var active_panel;
-    var active_link;
-    var child_panel;
-    var last_active_item;
 
+    var active_selectors = [ this.option('selectors.menu_item_active') ];
+    var matching_items = [];
+    var matching_element;
+    var final_match;
 
-    //
-    // See if we can find the deepest instance of the menu_item_currently_active selector
-    //
-    if ( this.option('auto_traverse_by_url') ) {
+    active_selectors = active_selectors.concat( this.activeLinkSelectors() );
 
-      //
-      // Find active item by looking at the current url
-      //
-      var valid_urls;
-      var found_links = new Array();
-      var cur_links;
-      var parent_count;
-      var this_node;
-      var pathname_with_query_string = window.location.href;
-      var link_selectors_additional;
-      var i;
+    for( var i = 0; i < active_selectors.length; i++ ) {
+      matching_items =this.elementFindAll(active_selectors[i]);
 
-      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
-      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
+      if ( matching_items.length > 0 ) {
+        matching_element = matching_items[matching_items.length - 1]; //Take the deepest match if we found multiple
 
-      //
-      // Make sure these are in order of least to most favorable/specific
-      //
-      valid_urls = [
-        window.location.pathname,
-        window.location.href,
-        pathname_with_query_string
-      ];
+        if ( matching_element ) {
 
-      //
-      // Also check to see if additional selectors were set in our options
-      //
-      for ( i = 0; i < valid_urls.length; i++ ) {
-        found_links.push( this.elementFindAll('[href="' + valid_urls[i] + '"]') );
-      }
+          if ( !matching_element.matches(this.option('selectors.menu_item')) ) {
+            //
+            // We want to find a menu item, not a link or something else
+            //
+            var parent_count = 3; //max attempts to find parent
+            var this_node = matching_element.parentNode;
 
-      if ( this.option('auto_traverse_link_selectors_active') ) {
-
-        link_selectors_additional = this.option('auto_traverse_link_selectors_active');
-
-        for ( i = 0; i < link_selectors_additional.length; i++ ) {
-          found_links.push( this.elementFindAll(link_selectors_additional[i]) );
-        }
-      }
-
-      for ( i = 0; i < found_links.length; i++ ) {
-
-        cur_links = found_links[i];
-        if ( cur_links.length > 0 ) {
-          for ( var j = 0; j < cur_links.length; j++ ) {
-            parent_count = 3; //max attempts to find parent
-
-            this_node = cur_links[j];
             while ( parent_count > 0 ) {
               if ( this_node.matches(this.option('selectors.menu_item')) ) {
-                active_items.push( this_node );
+                final_match = this_node;
                 break;
               }
               this_node = this_node.parentNode;
               parent_count--;
             }
+          }  
+          else {
+            final_match = matching_element;
+          }
+
+          if ( final_match ) {
+            break;      
           }
         }
       }
-
-    }
-    else {
-      active_items = this.elementFindAll( this.option('selectors.menu_item_active') );
     }
 
-    if ( active_items && active_items.length > 0 ) {
-      last_active_item = active_items[ active_items.length - 1 ];
-      last_active_item.classList.add( TraversableMenu.classNameFromSelector(this.option('selectors.menu_item_active')) );
+    return final_match;
 
-      active_link = last_active_item.querySelector( this.option('selectors.menu_item_link') );
-      active_link.classList.add( this.option('classes.menu_item_link_active') );
+  }
+  catch(e) {
+    throw e;
+  }
 
-      active_panel = this.panelByChildElement(last_active_item);
+}
 
-      if ( this.option('auto_traverse_skip_levels') > 0 && !isNaN(this.option('auto_traverse_skip_levels')) ) {
-        var levels_remaining = this.option('auto_traverse_skip_levels');
+/**
+* Automatically show the 'active' menu panel by finding the deepest instance of menu_item_currently_active_selector
+* @param none
+* @return true if an active menu panel was found, false otherwise
+*/
+TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
 
-        while( levels_remaining > 0 ) {
-          if ( child_panel = this.childPanelGet(last_active_item) ) {
-            active_panel = child_panel;
-          }
-          levels_remaining--;
-        }
+  try {
+
+    var active_panel;
+    var child_panel;
+    var element;
+    var menu_link;
+
+    this.menu_item_active = this.activeMenuItemFind();
+    
+    if ( this.menu_item_active ) {
+
+      this.menu_item_active.classList.add( TraversableMenu.classNameFromSelector(this.option('selectors.menu_item_active')) );
+      this.menu_item_active.classList.add( TraversableMenu.classNameFromSelector(this.option('selectors.menu_item_active_trail')) );
+
+      if ( menu_link = this.menu_item_active.querySelector(this.option('selectors.menu_item_link')) ) {
+        menu_link.classList.add( this.option('classes.menu_item_link_active') );
       }
+
+      active_panel = this.panelByChildElement(this.menu_item_active);
 
       if ( active_panel ) {
+        if ( this.option('auto_traverse_skip_levels') > 0 && !isNaN(this.option('auto_traverse_skip_levels')) ) {
+          var levels_remaining = this.option('auto_traverse_skip_levels');
+
+          while( levels_remaining > 0 ) {
+            if ( child_panel = this.childPanelGet(this.menu_item_active) ) {
+              active_panel = child_panel;
+            }
+            levels_remaining--;
+          }
+        }
+
         this.panelActivate(active_panel, { 'show_immediate': true });
         return true;
       }
+
     }
 
     return false;
@@ -1381,7 +1578,11 @@ TraversableMenu.tokenReplace = function( given_string, token, val ) {
 
 
 TraversableMenu.classNameFromSelector = function( selector ) {
-  return selector.toString().replace(/^\./, '');
+  
+  var split = selector.split('.');
+  var final = split[split.length-1];
+  
+  return final.toString().replace(/^\./, '');
 }
 
 /**
@@ -1409,24 +1610,37 @@ TraversableMenu.Get_if_set = function( obj, keys ) {
  */
 TraversableMenu.siblingChildrenBySelector = function( container, selector ) {
   try {
+
     var first_item = container.querySelector( selector );
+    var child_items_only = [];
 
     if ( first_item ) {
       var first_item_parent = first_item.parentNode;
-      var all_items = container.querySelectorAll( selector );
+      var first_parent_id;
+      var random_id;
+      var selector;
+      var descendant_selector;
+      var container_context = ( container.parentNode ) ? container.parentNode : document;
 
-      if ( all_items.length > 0 ) {
-        var child_items_only = [].filter.call(all_items,
-          function( item ) {
-            return item.parentNode == first_item_parent;
-          }
-        );
-
-        return child_items_only;
+      if ( !(first_parent_id = first_item_parent.getAttribute('id')) ) {
+        random_id = 'elem_id_' + (Math.floor(Math.random()*90000) + 10000).toString();
+        first_item_parent.setAttribute('id', random_id);
       }
+
+      //
+      // Currently can't do direct child selectors like '>.sub-item'; prepending the element ID is a workaround.
+      //
+      descendant_selector = '#' + first_item_parent.getAttribute('id') + '>' + selector;
+
+      child_items_only = container_context.querySelectorAll(descendant_selector);
+
+      if ( random_id ) {
+        first_item_parent.removeAttribute('id');
+      }
+
     }
 
-    return [];
+    return child_items_only;
 
   }
   catch(e) {
@@ -1437,21 +1651,28 @@ TraversableMenu.siblingChildrenBySelector = function( container, selector ) {
 TraversableMenu.immediateChildren = function( container ) {
   try {
 
-    var children = container.children;
+    var container_context = ( container.parentNode ) ? container.parentNode : document;
+    var random_id;
+    var selector;
+    var children = [];
 
-    for ( var i = 0; i < children.length; i++ ) {
-
-      var child_items_only = [].filter.call(children,
-        function( item ) {
-          return item.parentNode == container;
-        }
-      );
-
-      return child_items_only;
-
+    if ( !container.getAttribute('id') ) {
+      random_id = 'elem_id_' + (Math.floor(Math.random()*90000) + 10000).toString();
+      container.setAttribute('id', random_id);
     }
 
-    return [];
+    //
+    // Currently can't do direct child selectors like '>.sub-item'; prepending the element ID is a workaround.
+    //
+    selector = '#' + container.getAttribute('id') + '>*';
+
+    children = container_context.querySelectorAll( selector );
+
+    if ( random_id ) {
+      container.removeAttribute('id');
+    }
+
+    return children;
 
   }
   catch(e) {
@@ -1490,7 +1711,7 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 }
 
 TraversableMenu.options_default = function() {
-  return {
+  var options = {
     selectors: {
       'panel': '.menu__panel', //an individual menu panel - usually one level of the menu, shown expanded
       'panel_trigger_child': '.menu__panel__trigger--child', //trigger element that goes one level deeper,
@@ -1502,21 +1723,9 @@ TraversableMenu.options_default = function() {
       'menu_item_active_trail': '.menu__item--active-trail', //part of the active menu trail
       'menu_item': '.menu__item',
       'menu_item_link': '.menu__item__link',
-      'tabbable_elements': 'a' //Tabbing to these is disabled when menu panel is closed
-    },
-    classes: {
-      'panels_initialized': 'traversable-menu--initialized',
-      'panel_active': 'menu__panel--active',
-      'panel_active_trail': 'menu__panel--active-trail',
-      'panel_active_parent': 'menu__panel--active-parent',
-      'panel_child_open': 'menu__panel--child-open',
-      'panel_show_immediate': '-show-immediate',
-      'panel_depth': 'menu__panel--depth-[:n:]',
-      'panel_height_auto_applied': '-panel-height-auto',
-      'panels_container_height_auto_applied': '-panels-container-height-auto',
-      'panel_title_link': 'menu__panel__title__link',
-      'menu_item_link_active': 'menu__item__link--active'
-    },
+      'menu_item_link_active': '.menu__item__link--active',
+      'tabbable_elements': 'a', //Tabbing to these is disabled when menu panel is closed      
+    },    
     triggers: {
       'parent_text': 'Up to [:previous-title:] menu',
       'top_text': 'Up to Main Menu',
@@ -1548,6 +1757,15 @@ TraversableMenu.options_default = function() {
         }
       }
     },
+    'render': {
+      'panels_container': null,
+      'depth_max': null,
+      'depth_max_relative': null
+    },
+    'active': {
+      'find_by_url': false,
+      'selectors_additional': []
+    },
     'debug': false,
     'panel_auto_scroll_to_top': true,
     'panel_height_auto': true,
@@ -1558,13 +1776,30 @@ TraversableMenu.options_default = function() {
     'panel_title_link_enabled': true,
     'auto_traverse_to_active': true,
     'auto_traverse_skip_levels': 0,
-    'auto_traverse_by_url': false,
     'auto_traverse_link_selectors_active': [],
     'siblings_at_lowest_level': false,
     'errors': {
       'silent_if_no_container': true
     }
   };
+
+  options.classes =  {
+    'panels_initialized': 'traversable-menu--initialized',
+    'panel_active': 'menu__panel--active',
+    'panel_active_trail': 'menu__panel--active-trail',
+    'panel_active_parent': 'menu__panel--active-parent',
+    'panel_child_open': 'menu__panel--child-open',
+    'panel_show_immediate': '-show-immediate',
+    'panel_depth': 'menu__panel--depth-[:n:]',
+    'panel_height_auto_applied': '-panel-height-auto',
+    'panels_container_height_auto_applied': '-panels-container-height-auto',
+    'panel_title_link': 'menu__panel__title__link',
+    'menu_item_link': TraversableMenu.classNameFromSelector( options.selectors.menu_item_link ),
+    'menu_item_link_active': TraversableMenu.classNameFromSelector( options.selectors.menu_item_link_active ),
+  };
+
+  return options;
+
 }
 
 
