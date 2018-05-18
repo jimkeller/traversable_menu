@@ -128,7 +128,31 @@ TraversableMenu.prototype.option = function ( key, val ) {
       return ret;
     }
     else {
-      this.options[key] = val;
+
+      var keys = key.split('.');
+      var key_string = '';
+      var val_typeof = null;
+      var i;
+
+      for ( i = 0; i < keys.length; i++ ) {
+
+        key_string = key_string + '[\'' + keys[i] + '\']';
+
+        eval( 'val_typeof = typeof(this.options' + key_string + ')');
+
+        if ( val_typeof == 'undefined' ) {
+          eval( 'this.options' + key_string + '={};');          
+        }        
+        
+      }
+
+      if ( key_string ) {
+        eval( 'this.options' + key_string + '=val;');           
+      }
+      else {
+        throw 'Invalid parameters passed to option set';
+      }
+      
     }
   }
   catch(e) {
@@ -367,19 +391,17 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
 TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
   try {
     
-    var menu_link;
+    var menu_link = menu_item.querySelector(this.option('selectors.menu_item_link'));
+    var active_selectors = this.activeItemSelectors();
 
-    if ( menu_item.classList.contains(this.option('classes.menu_item_active')) ) {
-      return true;
-    }
+    for( var i = 0; i < active_selectors.length; i++ ) {
 
-    if ( menu_link = menu_item.querySelector(this.option('selectors.menu_item_link')) ) {
-      var url_selectors = this.activeLinkSelectors();
+      if ( menu_item.matches(active_selectors[i]) ) {
+        return true;
+      }
 
-      for( var i = 0; i < url_selectors.length; i++ ) {
-        if ( menu_link.matches(url_selectors[i]) ) {
-          return true;
-        }
+      if ( menu_link != null && menu_link.matches(active_selectors[i]) ) {
+        return true;
       }
     }
 
@@ -391,7 +413,7 @@ TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
   }
 }
 
-TraversableMenu.prototype.activeURLsGet = function() {
+TraversableMenu.prototype.activeURLsDefault = function() {
   try {
 
       var active_urls = [];
@@ -428,13 +450,44 @@ TraversableMenu.prototype.activeURLsGet = function() {
         active_urls.push( href_split[0] ); //URL without query string
       }
 
-      return active_urls;        
+      return active_urls; 
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+TraversableMenu.prototype.activeURLsGet = function() {
+  try {
+
+    var active_urls = [];
+
+    //
+    // Check for explicitly set active urls
+    //
+    if ( this.option('active.urls') !== null ) {
+
+      var active_urls_explicit = this.option('active.urls');
+
+      if ( typeof(active_urls_explicit) == 'function' && typeof(active_urls_explicit.call) == 'function' ) {
+        active_urls = active_urls.concat(  active_urls_explicit.call() );
+      }
+      else {
+        active_urls = active_urls.concat(  active_urls_explicit ); 
+      }
+    }
+    else {
+      active_urls = this.activeURLsDefault();
+    }
+
+    return active_urls;
+       
   }
   catch( e ) {
     throw e;
   }
 }
-
 
 TraversableMenu.prototype.activeURLSelectors = function() {
   try {
@@ -455,24 +508,31 @@ TraversableMenu.prototype.activeURLSelectors = function() {
   }
 }
 
-TraversableMenu.prototype.activeLinkSelectors = function() {
+TraversableMenu.prototype.activeItemSelectors = function() {
   try {
 
       var selectors = [];
 
-      selectors.push( this.option('selectors.menu_item_link_active') );
+      if ( this.option('active.selectors') == null ) {
 
-      if ( this.option('active.find_by_url') ) {
-        selectors = selectors.concat( selectors, this.activeURLSelectors() );
-      }
+        selectors.push( this.option('selectors.menu_item_active') );
+        selectors.push( this.option('selectors.menu_item_link_active') );
 
-      if ( this.option('active.selectors_additional') ) {
-
-        var link_selectors = this.option('active.selectors_additional');
-
-        for ( var i = 0; i < link_selectors.length; i++ ) {
-          selectors.push( link_selectors[i] );
+        if ( this.option('active.find_by_url') ) {
+          selectors = selectors.concat( selectors, this.activeURLSelectors() );
         }
+
+        if ( this.option('active.selectors_additional') ) {
+
+          var link_selectors = this.option('active.selectors_additional');
+
+          for ( var i = 0; i < link_selectors.length; i++ ) {
+            selectors.push( link_selectors[i] );
+          }
+        }
+      }
+      else {
+        selectors = this.option('active.selectors');
       }
 
       return selectors;
@@ -483,9 +543,6 @@ TraversableMenu.prototype.activeLinkSelectors = function() {
     throw e;
   }
 }
-
-
-
 
 TraversableMenu.prototype.menuItemInit = function( menu_item ) {
   try {
@@ -887,12 +944,10 @@ TraversableMenu.prototype.activeMenuItemFind = function() {
 
   try {
 
-    var active_selectors = [ this.option('selectors.menu_item_active') ];
     var matching_items = [];
     var matching_element;
     var final_match;
-
-    active_selectors = active_selectors.concat( this.activeLinkSelectors() );
+    var active_selectors = this.activeItemSelectors();
 
     for( var i = 0; i < active_selectors.length; i++ ) {
       matching_items =this.elementFindAll(active_selectors[i]);
@@ -904,9 +959,9 @@ TraversableMenu.prototype.activeMenuItemFind = function() {
 
           if ( !matching_element.matches(this.option('selectors.menu_item')) ) {
             //
-            // We want to find a menu item, not a link or something else
+            // We want to find the menu item, not the link or something else
             //
-            var parent_count = 3; //max attempts to find parent
+            var parent_count = this.option('active.parents_search_max');
             var this_node = matching_element.parentNode;
 
             while ( parent_count > 0 ) {
@@ -1763,8 +1818,12 @@ TraversableMenu.options_default = function() {
       'depth_max_relative': null
     },
     'active': {
-      'find_by_url': false,
-      'selectors_additional': []
+      'find_by_url': true,
+      'urls': null,
+      'selectors': null,
+      'selectors_additional': [],
+      'parents_search_max': 10 //max attempts to find parent menu item element when finding active link.
+                               //Should be high enough to go from a panel title to its parent menu item above
     },
     'debug': false,
     'panel_auto_scroll_to_top': true,
