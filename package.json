@@ -1,7 +1,7 @@
 {
   "name": "traversable_menu",
   "version": "1.0.3",
-  "description": "A sliding multi-level navigation menu that is fully ADA compliant",
+  "description": "A sliding multi-level navigation menu / push menu that is fully ADA compliant",
   "main": "traversable_menu.js",
   "scripts": {},
   "repository": {
