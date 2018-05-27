@@ -244,11 +244,11 @@ TraversableMenu.prototype.panelsInitialize = function() {
           }
         }
         else {
-          this.depth_max_canonical = this.option('depth_max');
+          this.depth_max_canonical = this.option('render.depth_max');
         }
       }
       else {
-          this.depth_max_canonical = this.option('depth_max');
+          this.depth_max_canonical = this.option('render.depth_max');
       }
 
       //
@@ -515,8 +515,10 @@ TraversableMenu.prototype.activeItemSelectors = function() {
 
       if ( this.option('active.selectors') == null ) {
 
-        selectors.push( this.option('selectors.menu_item_active') );
-        selectors.push( this.option('selectors.menu_item_link_active') );
+        if ( this.option('active.find_by_class') ) {
+          selectors.push( this.option('selectors.menu_item_active') );
+          selectors.push( this.option('selectors.menu_item_link_active') );
+        }
 
         if ( this.option('active.find_by_url') ) {
           selectors = selectors.concat( selectors, this.activeURLSelectors() );
@@ -1819,6 +1821,7 @@ TraversableMenu.options_default = function() {
     },
     'active': {
       'find_by_url': true,
+      'find_by_class': true,
       'urls': null,
       'selectors': null,
       'selectors_additional': [],
