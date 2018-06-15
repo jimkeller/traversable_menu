@@ -928,7 +928,7 @@ TraversableMenu.prototype.elementFindAll = function( selector ) {
       return container.querySelectorAll( selector );
     }
 
-    return null;
+    return new Array();
 
   }
   catch(e) {
