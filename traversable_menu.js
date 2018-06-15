@@ -413,51 +413,6 @@ TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
   }
 }
 
-TraversableMenu.prototype.activeURLsDefault = function() {
-  try {
-
-      var active_urls = [];
-      var href_split = window.location.href.split('#');
-      var pathname_with_query_string = window.location.href;
-      
-      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
-      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
-
-      //
-      // Make sure these are in order of most to least favorable/specific;
-      // Matching is done on a first-match basis
-      //
-      active_urls = [
-        pathname_with_query_string,
-        window.location.pathname,
-        window.location.href
-      ];
-
-      //
-      // Additional possible permutations of URL
-      //      
-      if ( href_split.length > 1 ) {
-        active_urls.push( href_split[0] ); //URL without fragment
-
-        href_split = href_split[0].split('?');
-        if ( href_split.length > 1 ) {
-          active_urls.push( href_split[0] ); //URL without fragment or query string
-        }
-      }
-
-      href_split = window.location.href.split('?');
-      if ( href_split.length > 1 ) {
-        active_urls.push( href_split[0] ); //URL without query string
-      }
-
-      return active_urls; 
-
-  }
-  catch(e) {
-    throw e;
-  }
-}
-
 TraversableMenu.prototype.activeURLsGet = function() {
   try {
 
@@ -478,7 +433,7 @@ TraversableMenu.prototype.activeURLsGet = function() {
       }
     }
     else {
-      active_urls = this.activeURLsDefault();
+      active_urls = TraversableMenu.activeURLsDefault();
     }
 
     return active_urls;
@@ -1628,6 +1583,50 @@ TraversableMenu.prototype.debug = function() {
 
 }
 
+TraversableMenu.activeURLsDefault = function() {
+  try {
+
+      var active_urls = [];
+      var href_split = window.location.href.split('#');
+      var pathname_with_query_string = window.location.href;
+      
+      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
+      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
+
+      //
+      // Make sure these are in order of most to least favorable/specific;
+      // Matching is done on a first-match basis
+      //
+      active_urls = [
+        pathname_with_query_string,
+        window.location.pathname,
+        window.location.href
+      ];
+
+      //
+      // Additional possible permutations of URL
+      //      
+      if ( href_split.length > 1 ) {
+        active_urls.push( href_split[0] ); //URL without fragment
+
+        href_split = href_split[0].split('?');
+        if ( href_split.length > 1 ) {
+          active_urls.push( href_split[0] ); //URL without fragment or query string
+        }
+      }
+
+      href_split = window.location.href.split('?');
+      if ( href_split.length > 1 ) {
+        active_urls.push( href_split[0] ); //URL without query string
+      }
+
+      return active_urls; 
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
 
 TraversableMenu.tokenReplace = function( given_string, token, val ) {
   return given_string.replace( '[:' + token.toString() + ':]', val);
