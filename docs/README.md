@@ -22,6 +22,7 @@ https://www.easternstandard.com
 
 
 2. Add the markup for your menu:
+
 ```
 <div class="traversable-menu">
   <div class="menu__panel">
@@ -49,6 +50,7 @@ https://www.easternstandard.com
   </div>
 </div>
 ```
+
 3. Initialize traversable menu using basic options:
 
 ```
