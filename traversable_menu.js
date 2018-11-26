@@ -10,6 +10,8 @@
 ***/
 function TraversableMenu( options ) {
 
+  TraversableMenu.instance_index++; 
+
   var success = true;
   var callback = null;
   var callback_params = { traversable_menu: this };
@@ -24,6 +26,7 @@ function TraversableMenu( options ) {
     this.panels_active_trail = {};
     this.panels_container = null;
     this.depth_max_canonical = null;
+    this.trigger_index = 0; 
 
     //
     // Fire 'before' initialize callback
@@ -413,51 +416,6 @@ TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
   }
 }
 
-TraversableMenu.prototype.activeURLsDefault = function() {
-  try {
-
-      var active_urls = [];
-      var href_split = window.location.href.split('#');
-      var pathname_with_query_string = window.location.href;
-      
-      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
-      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
-
-      //
-      // Make sure these are in order of most to least favorable/specific;
-      // Matching is done on a first-match basis
-      //
-      active_urls = [
-        pathname_with_query_string,
-        window.location.pathname,
-        window.location.href
-      ];
-
-      //
-      // Additional possible permutations of URL
-      //      
-      if ( href_split.length > 1 ) {
-        active_urls.push( href_split[0] ); //URL without fragment
-
-        href_split = href_split[0].split('?');
-        if ( href_split.length > 1 ) {
-          active_urls.push( href_split[0] ); //URL without fragment or query string
-        }
-      }
-
-      href_split = window.location.href.split('?');
-      if ( href_split.length > 1 ) {
-        active_urls.push( href_split[0] ); //URL without query string
-      }
-
-      return active_urls; 
-
-  }
-  catch(e) {
-    throw e;
-  }
-}
-
 TraversableMenu.prototype.activeURLsGet = function() {
   try {
 
@@ -478,7 +436,7 @@ TraversableMenu.prototype.activeURLsGet = function() {
       }
     }
     else {
-      active_urls = this.activeURLsDefault();
+      active_urls = TraversableMenu.activeURLsDefault();
     }
 
     return active_urls;
@@ -777,11 +735,13 @@ TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel, trig
     var panel_depth = panel.getAttribute('data-panel-depth');
     var panel_index = panel.getAttribute('data-panel-index');
 
-    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() );
+    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() + '_' + this.trigger_index.toString() );
     trigger.setAttribute('aria-haspopup', true);
     trigger.setAttribute('aria-expanded', false);
     trigger.setAttribute('aria-controls', this.panelID(panel));
     trigger.setAttribute('data-panel-trigger-for', this.panelID(panel) );
+
+    this.trigger_index++;
   }
   catch(e) {
     throw e;
@@ -1095,7 +1055,7 @@ TraversableMenu.prototype.panelIDSetByDepthIndex = function( panel, depth, index
 
   try {
 
-    var id_suffix = 'panel_' + depth.toString() + '_' + index.toString();
+    var id_suffix = 'panel_' + TraversableMenu.instance_index.toString() + '_' + depth.toString() + '_' + index.toString();
 
     //panel.setAttribute( 'data-panel-id', id_suffix );
     panel.setAttribute( 'id', this.elementIDPrefix() + '_' + id_suffix );
@@ -1628,6 +1588,50 @@ TraversableMenu.prototype.debug = function() {
 
 }
 
+TraversableMenu.activeURLsDefault = function() {
+  try {
+
+      var active_urls = [];
+      var href_split = window.location.href.split('#');
+      var pathname_with_query_string = window.location.href;
+      
+      pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
+      pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
+
+      //
+      // Make sure these are in order of most to least favorable/specific;
+      // Matching is done on a first-match basis
+      //
+      active_urls = [
+        pathname_with_query_string,
+        window.location.pathname,
+        window.location.href
+      ];
+
+      //
+      // Additional possible permutations of URL
+      //      
+      if ( href_split.length > 1 ) {
+        active_urls.push( href_split[0] ); //URL without fragment
+
+        href_split = href_split[0].split('?');
+        if ( href_split.length > 1 ) {
+          active_urls.push( href_split[0] ); //URL without fragment or query string
+        }
+      }
+
+      href_split = window.location.href.split('?');
+      if ( href_split.length > 1 ) {
+        active_urls.push( href_split[0] ); //URL without query string
+      }
+
+      return active_urls; 
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
 
 TraversableMenu.tokenReplace = function( given_string, token, val ) {
   return given_string.replace( '[:' + token.toString() + ':]', val);
@@ -1864,6 +1868,10 @@ TraversableMenu.options_default = function() {
 
 }
 
+//
+// Static Members
+//
+TraversableMenu.instance_index = 0;
 
 //
 // A quick polyfill to support Element.matches in older browsers
