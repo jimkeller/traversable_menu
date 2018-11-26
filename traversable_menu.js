@@ -10,6 +10,8 @@
 ***/
 function TraversableMenu( options ) {
 
+  TraversableMenu.instance_index++; 
+
   var success = true;
   var callback = null;
   var callback_params = { traversable_menu: this };
@@ -24,6 +26,7 @@ function TraversableMenu( options ) {
     this.panels_active_trail = {};
     this.panels_container = null;
     this.depth_max_canonical = null;
+    this.trigger_index = 0; 
 
     //
     // Fire 'before' initialize callback
@@ -732,11 +735,13 @@ TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel, trig
     var panel_depth = panel.getAttribute('data-panel-depth');
     var panel_index = panel.getAttribute('data-panel-index');
 
-    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() );
+    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() + '_' + this.trigger_index.toString() );
     trigger.setAttribute('aria-haspopup', true);
     trigger.setAttribute('aria-expanded', false);
     trigger.setAttribute('aria-controls', this.panelID(panel));
     trigger.setAttribute('data-panel-trigger-for', this.panelID(panel) );
+
+    this.trigger_index++;
   }
   catch(e) {
     throw e;
@@ -1050,7 +1055,7 @@ TraversableMenu.prototype.panelIDSetByDepthIndex = function( panel, depth, index
 
   try {
 
-    var id_suffix = 'panel_' + depth.toString() + '_' + index.toString();
+    var id_suffix = 'panel_' + TraversableMenu.instance_index.toString() + '_' + depth.toString() + '_' + index.toString();
 
     //panel.setAttribute( 'data-panel-id', id_suffix );
     panel.setAttribute( 'id', this.elementIDPrefix() + '_' + id_suffix );
@@ -1863,6 +1868,10 @@ TraversableMenu.options_default = function() {
 
 }
 
+//
+// Static Members
+//
+TraversableMenu.instance_index = 0;
 
 //
 // A quick polyfill to support Element.matches in older browsers
