@@ -212,7 +212,9 @@ TraversableMenu.prototype.panelsInitialize = function() {
     var panels_container = this.panelsGetContainer();
 
     if ( panels_container ) {
-      panels_container.setAttribute( 'role', this.option('accessibility.container_role') );
+      if ( this.option('accessibility.container_role') != '' ) {
+        panels_container.setAttribute( 'role', this.option('accessibility.container_role') );
+      }
 
       //
       // If we're looking to set a max depth relative to the active item, do it now
@@ -304,9 +306,12 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
     panel.setAttribute( 'data-panel-depth', depth.toString() );
     panel.classList.add( TraversableMenu.tokenReplace(this.option('classes.panel_depth'), 'n', depth.toString()) );
     panel.setAttribute( 'data-panel-index', this.menu_item_index.toString() );
-    panel.setAttribute( 'role', this.option('accessibility.panel_role') );
     this.panelIDSetByDepthIndex( panel, depth, this.menu_item_index );
     this.panelActiveAttributesRemove( panel ); //Assume inactive to start; will be activated later
+
+    if ( this.option('accessibility.panel_role') != '' ) {
+      panel.setAttribute( 'role', this.option('accessibility.panel_role') );
+    }
 
     // if ( this.option('panel_height_auto') ) {
     //   this.panelApplyCalculatedHeight( panel );
@@ -506,7 +511,10 @@ TraversableMenu.prototype.activeItemSelectors = function() {
 
 TraversableMenu.prototype.menuItemInit = function( menu_item ) {
   try {
-    menu_item.setAttribute( 'role', this.option('accessibility.menu_item_role') );
+    
+    if( this.option('accessibility.menu_item_role') != '' ) {
+      menu_item.setAttribute( 'role', this.option('accessibility.menu_item_role') );
+    }
   }
   catch(e) {
     throw e;
