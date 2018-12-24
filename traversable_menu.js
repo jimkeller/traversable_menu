@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Jim Keller, Eastern Standard
+ * Copyright (c) 2018 Jim Keller, Eastern Standard
  * https://www.easternstandard.com
  */
 
@@ -41,7 +41,7 @@ function TraversableMenu( options ) {
     var panel_auto_activated = false;
 
     if ( this.option('auto_traverse_to_active') ) {
-      panel_auto_activated = this.panelActivateByActiveMenuItem();
+      panel_auto_activated = this.panelActivateByActiveMenuItem(); 
     }
 
     if ( !panel_auto_activated ) {
@@ -53,7 +53,7 @@ function TraversableMenu( options ) {
       if ( panels_container ) {
         var topmost_panel      = this.childPanelGet(panels_container); //get the first panel
         if ( topmost_panel ) {
-          this.panelActivate(topmost_panel, { 'show_immediate': true });
+          this.panelActivate(topmost_panel, { 'show_immediate': true }); 
         }
       }
 
@@ -69,6 +69,8 @@ function TraversableMenu( options ) {
         me.resizeHandler();
       }
     );
+
+    
 
   }
   catch( e ) {
@@ -262,7 +264,7 @@ TraversableMenu.prototype.panelsInitialize = function() {
       var child_panel      = this.childPanelGet(panels_container);
 
       if ( child_panel ) {
-        this.panelInitialize(child_panel, 0 );
+        this.panelInitialize(child_panel, 0, 0 );
       }
 
       panels_container.classList.add( this.option('classes.panels_initialized') );
@@ -285,115 +287,139 @@ TraversableMenu.prototype.panelsInitialize = function() {
 
 }
 
-TraversableMenu.prototype.panelInitialize = function( panel, depth, options ) {
+TraversableMenu.prototype.panelInitialize = function( panel, depth, trigger_index, options ) {
   try {
+
+    var child_triggers;
+    var parent_triggers;
 
     options = options || {}
 
-    var continue_recurse = true;
-    var child_panel;
-    var panel_trigger;
-    var menu_item;
-    var parent_menu_item_link;
-    var parent_panel = ( typeof(options.panel_parent) !== 'undefined' ) ? options.panel_parent : null;
-    var parent_menu_item = ( typeof(options.parent_menu_item) !== 'undefined' ) ? options.parent_menu_item : null;
-
-    this.debug('menu item index', this.menu_item_index, panel);
-
     //
-    // Base panel initialization
+    // Required panel attributes
     //
     panel.setAttribute( 'data-panel-depth', depth.toString() );
     panel.classList.add( TraversableMenu.tokenReplace(this.option('classes.panel_depth'), 'n', depth.toString()) );
-    panel.setAttribute( 'data-panel-index', this.menu_item_index.toString() );
-    this.panelIDSetByDepthIndex( panel, depth, this.menu_item_index );
+    panel.setAttribute( 'data-trigger-index', trigger_index.toString() );
+    this.panelIDSetByDepthTriggerIndex( panel, depth.toString(), trigger_index.toString(), );
     this.panelActiveAttributesRemove( panel ); //Assume inactive to start; will be activated later
 
     if ( this.option('accessibility.panel_role') != '' ) {
       panel.setAttribute( 'role', this.option('accessibility.panel_role') );
     }
 
-    // if ( this.option('panel_height_auto') ) {
-    //   this.panelApplyCalculatedHeight( panel );
-    // }
-
-    if ( depth == 0 ) {
-      this.panelTitleTextSet( panel, this.option('panel_title_first') );
-    }
-
     this.topTriggerInit( panel );
+    
+    if ( depth == 0 ) {
 
-    if ( parent_panel ) {
-      panel.setAttribute( 'data-panel-parent-id', parent_panel.getAttribute('id') );
-    }
-
-    if ( parent_menu_item ) {
-
-      if ( parent_menu_item_link = parent_menu_item.querySelector(this.option('selectors.menu_item_link')) ) {
-
-        //
-        // Remember the link text that triggers this panel,
-        // So we can say 'up to X menu' later
-        //
-        panel.setAttribute('data-parent-link-text', parent_menu_item_link.innerHTML );
-        this.parentTriggerInit(parent_menu_item, panel);
-      }
-    }
-
-    //
-    // Initialize child triggers and sub-panel (child) if present
-    //
-    var menu_items = this.childMenuItemsGet(panel);
-
-    for ( var i = 0; i < menu_items.length; i++ ) {
+      this.panelTitleTextSet( panel, this.option('panel_title_first') );
 
       //
-      // Keep a rolling count of all the menu items all the way down the panels, so we can create unique IDs
+      // Begin initialization of traversing behavior by locating all the triggers that show a child panel
       //
-      this.menu_item_index ++;
-      this.menuItemInit(menu_items[i]);
+      child_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_child'));
 
-      child_panel = this.childPanelGet(menu_items[i]);
+      //
+      // We start at the bottom of the tree and work our way up, so last trigger first. 
+      // This will be the last trigger, at the deepest part of the last menu item in the panel
+      //
+      for ( trigger_index = child_triggers.length - 1; trigger_index >= 0; trigger_index-- ) {
 
-      if ( child_panel ) {
+        var trigger = child_triggers[trigger_index];
+        var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
 
-        depth++;        
 
-        if ( this.depth_max_canonical === null || depth <= this.depth_max_canonical ) {
-            //
-            // Recursively call panelInitialize on the child panel
-            //            
-            var ret = this.panelInitialize( child_panel, depth, { panel_parent: panel, parent_menu_item: menu_items[i] } );
-            depth--;  
+        if ( menu_item ) {
           
-            //
-            // Initialize child triggers
-            //
-            this.childTriggerInit(menu_items[i], panel);
-        }
-        else {
-          //
-          // We've hit max depth
-          //
-          var child_trigger = menu_items[i].querySelector( this.option('selectors.panel_trigger_child') );
+          var menu_item_link = menu_item.querySelector(this.option('selectors.menu_item_link'));
+          var child_panel = menu_item.querySelector(this.option('selectors.panel'));
+          var child_depth = this.panelDepthDetermine(child_panel);
 
-          menu_items[i].removeChild(child_panel);
+          //
+          // Initialize menu item
+          //
+          this.menuItemInit(menu_item);
 
-          if ( child_trigger ) {
-            child_trigger.parentNode.removeChild(child_trigger);
+          if ( this.depth_max_canonical === null || child_depth <= this.depth_max_canonical ) {
+
+            //
+            // Initialize the child panel
+            //
+            this.panelInitialize(child_panel, child_depth, trigger_index);
+
+            //
+            // Finalize initialization of the trigger itself
+            //
+            this.childTriggerInit(trigger, child_panel);
+
+            //
+            // Remember the link text that triggers this panel,
+            // So we can say 'up to X menu' later
+            //
+            if ( menu_item_link ) {
+              child_panel.setAttribute('data-parent-link-text', menu_item_link.innerHTML );
+            }
           }
-
+          else {
+            //
+            // We've hit max depth
+            //
+            menu_item.removeChild(child_panel);
+            trigger.parentNode.removeChild(trigger);
+          }
         }
       }
 
+      //
+      // Now do all parent triggers. We do this separately from the loop above so that we can be 
+      // sure that all panels are initialized.
+      //
+      parent_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_parent'));
+
+      for ( trigger_index = 0; trigger_index < parent_triggers.length; trigger_index++ ) {
+
+        var trigger = parent_triggers[trigger_index];
+        var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
+        var child_panel = menu_item.querySelector(this.option('selectors.panel'));
+        
+        this.parentTriggerInit(menu_item, child_panel);
+      }
 
     }
+  }
+  catch(e) {
+    throw e;
+  }
+}
 
+TraversableMenu.prototype.panelDepthDetermine = function( panel ) {
+
+  try {
+
+    if ( panel.getAttribute('data-panel-depth') !== null ) {
+      return panel.getAttribute('data-panel-depth');
+    }
+    else {
+      var depth = 0;
+      var parent = panel.parentNode;
+
+      while ( parent && parent !== document ) {
+
+        if ( parent.matches(this.option('selectors.panel')) ) {
+          depth++;
+        }
+
+        parent = parent.parentNode;
+      }
+
+      return depth;
+    }
 
   }
   catch(e) {
     throw e;
   }
+  
 }
 
 TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
@@ -666,32 +692,26 @@ TraversableMenu.prototype.parentTriggerTextApply = function( trigger ) {
 /**
  * Initialize the "child" triggers that show a deeper panel
  * Must run after the panel itself has been initialized
- * @param {DomElement} menu_item
+ * @param {DomElement} trigger
+ * @param {DomElement} child_panel
  * @return none
  */
-TraversableMenu.prototype.childTriggerInit = function( menu_item, panel ) {
+TraversableMenu.prototype.childTriggerInit = function( trigger, child_panel ) {
 
   try {
-    var me = this;
-    var trigger = menu_item.querySelector( this.option('selectors.panel_trigger_child') );
-    var child_panel = menu_item.querySelector( this.option('selectors.panel') );
+    var menu_item = TraversableMenu.nearestAncestor( trigger, trigger.querySelector(this.option('selectors.menu_item')) );
+   
+    this.triggerAttributesInit(trigger, child_panel, 'child');
 
-    //var menu_item_link_text = menu_item_link.innerHTML;
+    child_panel.setAttribute('data-panel-triggered-as-child-by', trigger.getAttribute('id') );
 
-    if ( typeof(trigger) !== 'undefined' && trigger ) {
-
-      var panel_depth = child_panel.getAttribute('data-panel-depth');
-      var panel_index = child_panel.getAttribute('data-panel-index');
-     
-
-      this.triggerAttributesInit(trigger, child_panel, 'child');
-
-      child_panel.setAttribute('data-panel-triggered-as-child-by', trigger.getAttribute('id') );
-
-      this.panelTitleInit( child_panel, menu_item )
-      this.panelTriggerEventHandler( trigger, child_panel );
-
+    if ( typeof(menu_item) !== 'undefined' && menu_item ) {
+      this.panelTitleInit( child_panel, menu_item );
     }
+
+    this.panelTriggerEventHandler( trigger, child_panel );
+
+  
   }
   catch(e) {
     throw e;
@@ -702,7 +722,7 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
 
   try {
 
-    var depth = panel.getAttribute('data-panel-depth');
+    var depth = this.panelDepthDetermine(panel);
     var top_trigger = panel.querySelector( this.option('selectors.panel_trigger_top') );
     var me = this;
 
@@ -741,7 +761,7 @@ TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel, trig
   try {
 
     var panel_depth = panel.getAttribute('data-panel-depth');
-    var panel_index = panel.getAttribute('data-panel-index');
+    var panel_index = panel.getAttribute('data-trigger-index');
 
     trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() + '_' + this.trigger_index.toString() );
     trigger.setAttribute('aria-haspopup', true);
@@ -1059,11 +1079,11 @@ TraversableMenu.prototype.panelID = function( panel ) {
   return panel.getAttribute('id');
 }
 
-TraversableMenu.prototype.panelIDSetByDepthIndex = function( panel, depth, index ) {
+TraversableMenu.prototype.panelIDSetByDepthTriggerIndex = function( panel, depth, trigger_index ) {
 
   try {
 
-    var id_suffix = 'panel_' + TraversableMenu.instance_index.toString() + '_' + depth.toString() + '_' + index.toString();
+    var id_suffix = 'panel_' + TraversableMenu.instance_index.toString() + '_' + depth.toString() + '_' + trigger_index.toString();
 
     //panel.setAttribute( 'data-panel-id', id_suffix );
     panel.setAttribute( 'id', this.elementIDPrefix() + '_' + id_suffix );
@@ -1087,18 +1107,18 @@ TraversableMenu.prototype.panelGetByID = function( id ) {
 
 }
 
-TraversableMenu.prototype.panelGetParentID = function( panel ) {
-  try {
-    return panel.getAttribute('data-panel-parent-id');
-  }
-  catch (e) {
-    throw e;
-  }
-}
+// TraversableMenu.prototype.panelGetParentID = function( panel ) {
+//   try {
+//     return panel.getAttribute('data-panel-parent-id');
+//   }
+//   catch (e) {
+//     throw e;
+//   }
+// }
 
 TraversableMenu.prototype.panelGetParent = function( panel ) {
   try {
-    return this.panelGetByID( this.panelGetParentID(panel) );
+    return TraversableMenu.nearestAncestor(panel, this.option('selectors.panel'));
   }
   catch (e) {
     throw e;
@@ -1300,6 +1320,8 @@ TraversableMenu.prototype.panelActiveHeightApply = function ( ) {
 
   var active_panel = this.panelGetActive();
   var parent_panel;
+
+  this.debug('found active panel in panelActiveHeightApply');
 
   if ( active_panel ) {
     var new_height = this.panelApplyCalculatedHeight(active_panel);
@@ -1715,6 +1737,40 @@ TraversableMenu.siblingChildrenBySelector = function( container, selector ) {
   catch(e) {
     throw e;
   }
+}
+
+TraversableMenu.nearestAncestor = function( element, selector ) {
+
+  try {
+
+    var parent = element.parentNode;
+
+    if ( typeof(element.closest) != 'undefined') {
+      //
+      // closest will return the current element if it maches, 
+      // which is why we can call it on the immediate parent. 
+      //
+      return parent.closest(selector); 
+    }
+    else {
+
+      while( parent && parent !== document ) {
+        if ( parent.matches(selector) ) {
+          return parent;
+        }
+
+        parent = parent.parentNode;
+
+      }
+
+      return null;
+    }
+
+  }
+  catch(e) {
+    throw e;
+  }
+
 }
 
 TraversableMenu.immediateChildren = function( container ) {
