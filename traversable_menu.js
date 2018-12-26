@@ -17,6 +17,7 @@ function TraversableMenu( options ) {
   var callback_params = { traversable_menu: this };
 
   try {
+
     options = options || {};
 
     this.options = options;
@@ -27,6 +28,10 @@ function TraversableMenu( options ) {
     this.panels_container = null;
     this.depth_max_canonical = null;
     this.trigger_index = 0; 
+
+    if ( this.option('debug') != false ) {
+      console.time('traversable_init');
+    }
 
     //
     // Fire 'before' initialize callback
@@ -70,8 +75,10 @@ function TraversableMenu( options ) {
       }
     );
 
+    if ( this.option('debug') != false ) {
+      console.timeEnd('traversable_init');
+    }
     
-
   }
   catch( e ) {
 
@@ -571,7 +578,7 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
         parent_panel.setAttribute('data-panel-triggered-as-parent-by', trigger.getAttribute('id') );
 
         this.parentTriggerTextApply(trigger);
-        this.panelTriggerEventHandler( trigger, parent_panel );
+        this.panelTriggerEventHandlerApply( trigger );
       }
     }
   }
@@ -581,58 +588,17 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
 
 }
 
-TraversableMenu.prototype.panelTriggerEventHandler = function( trigger, panel_to_activate ) {
+TraversableMenu.prototype.panelTriggerEventHandlerApply = function( trigger ) {
   try {
 
-    var me = this;
+    var callback = this.option('callbacks.panel.activate.trigger');
 
     //
-    // for ADA compliance, we want to check to see if someone pressed enter as opposed to clicking on the link with a mouse
-    // If they're using a keyboard to navigate, focus the first menu item of the newly activated panel. Otherwise, don't
+    // We use bind on these because we want to be able to reference this object within the event handler
     //
-    trigger.addEventListener('keyup',
-      function( event ) {
-        event.preventDefault();
-
-        if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
-          me.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
-          panel_to_activate.setAttribute('data-last-activation-event', 'keyup');
-          me.panelActivate( panel_to_activate, { 'focus_first_item': true } );
-        }
-        return false;
-      }
-    );
-
-    trigger.addEventListener('mouseup',
-      function( event ) {
-        event.preventDefault();
-        me.debug('Mouseup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
-
-        if ( panel_to_activate.getAttribute('data-last-activation-event') != 'touchend' ) { //panel was already activated by touch
-          me.panelActivate( panel_to_activate );
-        }
-        panel_to_activate.setAttribute('data-last-activation-event', 'mouseup');
-        return false;
-      }
-    );
-
-    /* This doesn't seem necessary for now...
-    trigger.addEventListener('touchend',
-      function( event ) {
-        event.preventDefault();
-        panel_to_activate.setAttribute('data-last-activation-event', 'touchend');
-        me.panelActivate( panel_to_activate );
-        return false;
-      }
-    );
-    */
-
-    trigger.addEventListener('click',
-      function( event ) {
-        event.preventDefault();
-        return false;
-      }
-    );
+    trigger.addEventListener('keyup', callback.bind(null, this), false );
+    trigger.addEventListener('mouseup', callback.bind(null, this), false );
+    trigger.addEventListener('click', callback.bind(null, this), false );    
 
   }
   catch(e) {
@@ -709,7 +675,7 @@ TraversableMenu.prototype.childTriggerInit = function( trigger, child_panel ) {
       this.panelTitleInit( child_panel, menu_item );
     }
 
-    this.panelTriggerEventHandler( trigger, child_panel );
+    this.panelTriggerEventHandlerApply( trigger );
 
   
   }
@@ -737,7 +703,7 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
           if ( topmost_panel ) {
             top_trigger.innerHTML = this.option('triggers.top_text');
             this.triggerAttributesInit(top_trigger, topmost_panel, 'top');
-            this.panelTriggerEventHandler( top_trigger, topmost_panel );
+            this.panelTriggerEventHandlerApply( top_trigger );
           }
         }
       }
@@ -1835,6 +1801,70 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 
 }
 
+TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event ) {
+  try {
+
+    traversable_menu_obj.debug('trigger event fired');
+    traversable_menu_obj.debug(event);
+
+    var trigger = event.target;
+    var last_event = null;
+    var panel_id = trigger.getAttribute('data-panel-trigger-for');
+
+    if ( panel_id == null ) {
+      throw 'Could not determine panel_id in panelTriggerEventHandler. Tried to read data-panel-trigger-for argument and got null';
+    }
+
+    var panel_to_activate = document.getElementById(panel_id);
+
+    if ( panel_to_activate ) {
+      //
+      // for ADA compliance, we want to check to see if someone pressed enter as opposed to clicking on the link with a mouse
+      // If they're using a keyboard to navigate, focus the first menu item of the newly activated panel. Otherwise, don't
+      //
+      if ( event.type == 'keyup' ) {
+
+        event.preventDefault();
+
+        if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
+          
+          traversable_menu_obj.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);          
+          last_event = 'keyup';
+          traversable_menu_obj.panelActivate( panel_to_activate, { 'focus_first_item': true } );
+
+        }
+        return false;
+      }  
+      else if ( event.type == 'mouseup' ) {
+
+        event.preventDefault();
+
+        traversable_menu_obj.debug('Mouseup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
+
+        if ( panel_to_activate.getAttribute('data-last-activation-event') != 'touchend' ) { //panel was already activated by touch
+          last_event = 'mouseup';
+          traversable_menu_obj.panelActivate( panel_to_activate );
+        }
+                
+      }      
+      else if ( event.type == 'click' ) {
+        //
+        // Mouseup will handle everything without screwing around with touch events, so we basically disable click
+        //        
+        event.preventDefault();
+      }
+    }
+
+    panel_to_activate.setAttribute('data-last-activation-event', last_event);
+    return false; //Always return false to further ensure preventing of default behavior
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+
 TraversableMenu.options_default = function() {
   var options = {
     selectors: {
@@ -1868,7 +1898,8 @@ TraversableMenu.options_default = function() {
       panel: {
         activate: {
           before: null,
-          after: null
+          after: null,
+          trigger: TraversableMenu.panelTriggerEventHandler
         },
         initialize: {
           before: null,
