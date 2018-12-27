@@ -40,7 +40,7 @@ function TraversableMenu( options ) {
       callback.call(this, callback_params);
     }
 
-    success = this.panelsInitialize();
+    success = this.bootstrap();
     this.panelsHeightStore();
 
     var panel_auto_activated = false;
@@ -213,7 +213,7 @@ TraversableMenu.prototype.panelByChildElement = function( element ) {
 
 }
 
-TraversableMenu.prototype.panelsInitialize = function() {
+TraversableMenu.prototype.bootstrap = function() {
 
   try {
 
@@ -268,10 +268,11 @@ TraversableMenu.prototype.panelsInitialize = function() {
       //
       // Initialize menu panels
       //
-      var child_panel      = this.childPanelGet(panels_container);
+      var first_panel      = this.childPanelGet(panels_container);
 
-      if ( child_panel ) {
-        this.panelInitialize(child_panel, 0, 0 );
+      if ( first_panel ) {
+        this.panelTitleTextSet(first_panel, this.option('panel_title_first'));
+        this.panelInitialize(first_panel);
       }
 
       panels_container.classList.add( this.option('classes.panels_initialized') );
@@ -294,70 +295,70 @@ TraversableMenu.prototype.panelsInitialize = function() {
 
 }
 
-TraversableMenu.prototype.panelInitialize = function( panel, depth, trigger_index, options ) {
-  try {
-
-    var child_triggers;
-    var parent_triggers;
-
-    options = options || {}
+TraversableMenu.prototype.panelInitialize = function(panel, options) {
+  try {      
 
     //
-    // Required panel attributes
+    // Apply attributes to the given panel
     //
-    panel.setAttribute( 'data-panel-depth', depth.toString() );
-    panel.classList.add( TraversableMenu.tokenReplace(this.option('classes.panel_depth'), 'n', depth.toString()) );
-    panel.setAttribute( 'data-trigger-index', trigger_index.toString() );
-    this.panelIDSetByDepthTriggerIndex( panel, depth.toString(), trigger_index.toString(), );
-    this.panelActiveAttributesRemove( panel ); //Assume inactive to start; will be activated later
+    this.panelAttributesApply(panel);
 
-    if ( this.option('accessibility.panel_role') != '' ) {
-      panel.setAttribute( 'role', this.option('accessibility.panel_role') );
-    }
+    //
+    // Begin initialization of traversing behavior by locating all the triggers that show a child panel
+    //
+    child_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_child'));
 
-    this.topTriggerInit( panel );
-    
-    if ( depth == 0 ) {
+    //
+    // We start at the bottom of the tree and work our way up, so last trigger first. 
+    // This will be the last trigger, at the deepest part of the last menu item in the panel
+    //
+    for ( trigger_index = child_triggers.length - 1; trigger_index >= 0; trigger_index-- ) {
 
-      this.panelTitleTextSet( panel, this.option('panel_title_first') );
+      var trigger = child_triggers[trigger_index];
 
-      //
-      // Begin initialization of traversing behavior by locating all the triggers that show a child panel
-      //
-      child_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_child'));
+      if ( trigger.getAttribute('data-trigger-initialized-base') == true ) {
+        //
+        // Already initialized this trigger
+        //
+        continue;
+      }
 
-      //
-      // We start at the bottom of the tree and work our way up, so last trigger first. 
-      // This will be the last trigger, at the deepest part of the last menu item in the panel
-      //
-      for ( trigger_index = child_triggers.length - 1; trigger_index >= 0; trigger_index-- ) {
+      var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
 
-        var trigger = child_triggers[trigger_index];
-        var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
+      if ( menu_item ) {
+        
+        //
+        // Initialize menu item
+        //
+        this.menuItemInit(menu_item);
+        
+        //
+        // Base initialization of the trigger
+        //
+        this.triggerInitBase(trigger);
 
+        var menu_item_link = menu_item.querySelector(this.option('selectors.menu_item_link'));
+        var child_panel = menu_item.querySelector(this.option('selectors.panel'));
 
-        if ( menu_item ) {
-          
-          var menu_item_link = menu_item.querySelector(this.option('selectors.menu_item_link'));
-          var child_panel = menu_item.querySelector(this.option('selectors.panel'));
+        if ( child_panel ) {
           var child_depth = this.panelDepthDetermine(child_panel);
-
-          //
-          // Initialize menu item
-          //
-          this.menuItemInit(menu_item);
 
           if ( this.depth_max_canonical === null || child_depth <= this.depth_max_canonical ) {
 
             //
-            // Initialize the child panel
+            // Apply necessary child attributes
             //
-            this.panelInitialize(child_panel, child_depth, trigger_index);
+            this.panelAttributesApply(child_panel);
+
+            //
+            // Initialize the "back to top" trigger
+            //
+            this.topTriggerInit(child_panel);
 
             //
             // Finalize initialization of the trigger itself
             //
-            this.childTriggerInit(trigger, child_panel);
+            this.childTriggerInit(trigger);
 
             //
             // Remember the link text that triggers this panel,
@@ -376,23 +377,61 @@ TraversableMenu.prototype.panelInitialize = function( panel, depth, trigger_inde
           }
         }
       }
+    }
 
-      //
-      // Now do all parent triggers. We do this separately from the loop above so that we can be 
-      // sure that all panels are initialized.
-      //
-      parent_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_parent'));
+    //
+    // Now do all parent triggers. We do this separately from the loop above so that we can be 
+    // sure that all panels are initialized.
+    //
+    parent_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_parent'));
 
-      for ( trigger_index = 0; trigger_index < parent_triggers.length; trigger_index++ ) {
+    for ( trigger_index = 0; trigger_index < parent_triggers.length; trigger_index++ ) {
 
-        var trigger = parent_triggers[trigger_index];
-        var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
-        var child_panel = menu_item.querySelector(this.option('selectors.panel'));
-        
-        this.parentTriggerInit(menu_item, child_panel);
+      var trigger = parent_triggers[trigger_index];
+
+      if ( trigger.getAttribute('data-trigger-initialized-base') == true ) {
+        //
+        // Already initialized this trigger
+        //
+        continue;
       }
 
+      var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
+      var child_panel = menu_item.querySelector(this.option('selectors.panel'));
+      
+      this.parentTriggerInit(menu_item, child_panel);
     }
+
+  }
+  catch( e ) {
+    throw e;
+  }
+}
+
+TraversableMenu.prototype.panelAttributesApply = function( panel, options ) {
+  try {
+
+    var child_triggers;
+    var parent_triggers;
+    var depth;
+
+    options = options || {}
+
+    //
+    // Required panel attributes
+    //
+    depth = this.panelDepthDetermine(panel);
+
+    panel.setAttribute( 'data-panel-depth', depth.toString() );
+    panel.classList.add( TraversableMenu.tokenReplace(this.option('classes.panel_depth'), 'n', depth.toString()) );
+    
+    this.panelIDSetByDepthTriggerIndex( panel, depth.toString(), this.trigger_index.toString() );
+    this.panelActiveAttributesRemove( panel ); //Assume inactive to start; will be activated later
+
+    if ( this.option('accessibility.panel_role') != '' ) {
+      panel.setAttribute( 'role', this.option('accessibility.panel_role') );
+    }    
+
   }
   catch(e) {
     throw e;
@@ -574,6 +613,7 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
       for ( var i = 0; i < parent_triggers.length; i++ ) {
         var trigger = parent_triggers[i];
 
+        this.triggerInitBase(trigger);
         this.triggerAttributesInit(trigger, parent_panel, 'parent');
         parent_panel.setAttribute('data-panel-triggered-as-parent-by', trigger.getAttribute('id') );
 
@@ -656,17 +696,43 @@ TraversableMenu.prototype.parentTriggerTextApply = function( trigger ) {
 }
 
 /**
- * Initialize the "child" triggers that show a deeper panel
- * Must run after the panel itself has been initialized
+ * Base initialization for the "child" triggers that show a deeper panel
+ * Does not assume a child panel is present
  * @param {DomElement} trigger
- * @param {DomElement} child_panel
+ * @return none
+ */
+TraversableMenu.prototype.triggerInitBase = function( trigger ) {
+
+  try {
+
+    trigger.setAttribute('data-trigger-initialized-base', true);
+
+    this.triggerIDInit(trigger);
+    this.panelTriggerEventHandlerApply( trigger );
+  
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
+/**
+ * Initialize the "child" triggers that show a deeper panel
+ *
+ * @param {DomElement} trigger
  * @return none
  */
 TraversableMenu.prototype.childTriggerInit = function( trigger, child_panel ) {
 
   try {
-    var menu_item = TraversableMenu.nearestAncestor( trigger, trigger.querySelector(this.option('selectors.menu_item')) );
-   
+
+    if ( !trigger.getAttribute('data-trigger-initialized-base') ) {
+      this.triggerInitBase(trigger);
+    }
+
+    var menu_item = TraversableMenu.nearestAncestor( trigger, this.option('selectors.menu_item') );
+    var child_panel = menu_item.querySelector(this.option('selectors.panel'));
+  
     this.triggerAttributesInit(trigger, child_panel, 'child');
 
     child_panel.setAttribute('data-panel-triggered-as-child-by', trigger.getAttribute('id') );
@@ -674,9 +740,6 @@ TraversableMenu.prototype.childTriggerInit = function( trigger, child_panel ) {
     if ( typeof(menu_item) !== 'undefined' && menu_item ) {
       this.panelTitleInit( child_panel, menu_item );
     }
-
-    this.panelTriggerEventHandlerApply( trigger );
-
   
   }
   catch(e) {
@@ -702,6 +765,7 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
 
           if ( topmost_panel ) {
             top_trigger.innerHTML = this.option('triggers.top_text');
+            this.triggerInitBase(top_trigger);
             this.triggerAttributesInit(top_trigger, topmost_panel, 'top');
             this.panelTriggerEventHandlerApply( top_trigger );
           }
@@ -722,20 +786,30 @@ TraversableMenu.prototype.topTriggerInit = function( panel ) {
 
 }
 
+TraversableMenu.prototype.triggerIDInit = function( trigger ) {
+  try {
+
+    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + TraversableMenu.instance_index + '_' + this.trigger_index.toString() );
+
+    this.trigger_index++;
+  }
+  catch(e) {
+    throw e;
+  }
+
+}
+
 TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel, trigger_type ) {
 
   try {
 
-    var panel_depth = panel.getAttribute('data-panel-depth');
-    var panel_index = panel.getAttribute('data-trigger-index');
-
-    trigger.setAttribute('id', this.elementIDPrefix() + '_trigger_' + trigger_type + '_' + panel_depth.toString() + '_' + panel_index.toString() + '_' + this.trigger_index.toString() );
-    trigger.setAttribute('aria-haspopup', true);
-    trigger.setAttribute('aria-expanded', false);
-    trigger.setAttribute('aria-controls', this.panelID(panel));
-    trigger.setAttribute('data-panel-trigger-for', this.panelID(panel) );
-
-    this.trigger_index++;
+    if ( panel ) {
+      trigger.setAttribute('aria-haspopup', true);
+      trigger.setAttribute('aria-expanded', false);
+      trigger.setAttribute('aria-controls', this.panelID(panel));
+      trigger.setAttribute('data-panel-trigger-for', this.panelID(panel) );
+    }
+    
   }
   catch(e) {
     throw e;
@@ -1821,50 +1895,51 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
     var panel_id = trigger.getAttribute('data-panel-trigger-for');
 
     if ( panel_id == null ) {
-      throw 'Could not determine panel_id in panelTriggerEventHandler. Tried to read data-panel-trigger-for argument and got null';
+      traversable_menu_obj.debug('Could not determine panel_id in panelTriggerEventHandler. Tried to read data-panel-trigger-for argument and got null. This might not be a problem if you are lazy loading panel data');
     }
+    else {
+      var panel_to_activate = document.getElementById(panel_id);
 
-    var panel_to_activate = document.getElementById(panel_id);
-
-    if ( panel_to_activate ) {
-      //
-      // for ADA compliance, we want to check to see if someone pressed enter as opposed to clicking on the link with a mouse
-      // If they're using a keyboard to navigate, focus the first menu item of the newly activated panel. Otherwise, don't
-      //
-      if ( event.type == 'keyup' ) {
-
-        event.preventDefault();
-
-        if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
-          
-          traversable_menu_obj.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);          
-          last_event = 'keyup';
-          traversable_menu_obj.panelActivate( panel_to_activate, { 'focus_first_item': true } );
-
-        }
-        return false;
-      }  
-      else if ( event.type == 'mouseup' ) {
-
-        event.preventDefault();
-
-        traversable_menu_obj.debug('Mouseup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
-
-        if ( panel_to_activate.getAttribute('data-last-activation-event') != 'touchend' ) { //panel was already activated by touch
-          last_event = 'mouseup';
-          traversable_menu_obj.panelActivate( panel_to_activate );
-        }
-                
-      }      
-      else if ( event.type == 'click' ) {
+      if ( panel_to_activate ) {
         //
-        // Mouseup will handle everything without screwing around with touch events, so we basically disable click
-        //        
-        event.preventDefault();
-      }
-    }
+        // for ADA compliance, we want to check to see if someone pressed enter as opposed to clicking on the link with a mouse
+        // If they're using a keyboard to navigate, focus the first menu item of the newly activated panel. Otherwise, don't
+        //
+        if ( event.type == 'keyup' ) {
 
-    panel_to_activate.setAttribute('data-last-activation-event', last_event);
+          event.preventDefault();
+
+          if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
+            
+            traversable_menu_obj.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);          
+            last_event = 'keyup';
+            traversable_menu_obj.panelActivate( panel_to_activate, { 'focus_first_item': true } );
+
+          }
+          return false;
+        }  
+        else if ( event.type == 'mouseup' ) {
+
+          event.preventDefault();
+
+          traversable_menu_obj.debug('Mouseup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
+
+          if ( panel_to_activate.getAttribute('data-last-activation-event') != 'touchend' ) { //panel was already activated by touch
+            last_event = 'mouseup';
+            traversable_menu_obj.panelActivate( panel_to_activate );
+          }
+                  
+        }      
+        else if ( event.type == 'click' ) {
+          //
+          // Mouseup will handle everything without screwing around with touch events, so we basically disable click
+          //        
+          event.preventDefault();
+        }
+      }
+
+      panel_to_activate.setAttribute('data-last-activation-event', last_event);
+    }
 
     if ( relevant_event_types.indexOf(event.type) > -1 ) {     
       if ( callback = traversable_menu_obj.option('callbacks.trigger.after') ) {
