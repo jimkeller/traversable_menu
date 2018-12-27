@@ -591,7 +591,7 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
 TraversableMenu.prototype.panelTriggerEventHandlerApply = function( trigger ) {
   try {
 
-    var callback = this.option('callbacks.panel.activate.trigger');
+    var callback = this.option('callbacks.trigger.on');
 
     //
     // We use bind on these because we want to be able to reference this object within the event handler
@@ -1804,8 +1804,17 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event ) {
   try {
 
+    var callback_params = { traversable_menu: this, event: event };
+    var relevant_event_types = traversable_menu_obj.option('triggers.events');
+
     traversable_menu_obj.debug('trigger event fired');
     traversable_menu_obj.debug(event);
+
+    if ( relevant_event_types.indexOf(event.type) > -1 ) {
+      if ( callback = traversable_menu_obj.option('callbacks.trigger.before') ) {
+        callback.call(this, callback_params);
+      }
+    }
 
     var trigger = event.target;
     var last_event = null;
@@ -1856,6 +1865,13 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
     }
 
     panel_to_activate.setAttribute('data-last-activation-event', last_event);
+
+    if ( relevant_event_types.indexOf(event.type) > -1 ) {     
+      if ( callback = traversable_menu_obj.option('callbacks.trigger.after') ) {
+        callback.call(this, callback_params);
+      }
+    }
+
     return false; //Always return false to further ensure preventing of default behavior
 
   }
@@ -1886,7 +1902,8 @@ TraversableMenu.options_default = function() {
       'top_text': 'Up to Main Menu',
       'top_depth': 2, //the depth at which to start showing 'up to main menu' link
       'top_remove_auto': true, //whether to automatically remove 'up to main menu' link if the depth < triggers.top_depth
-      'top_text_use_top_panel_title_at_first_level': false //if panel_title_first is set, use that as our "top_text" at the first level below the topmost panel
+      'top_text_use_top_panel_title_at_first_level': false, //if panel_title_first is set, use that as our "top_text" at the first level below the topmost panel,
+      'events': [ 'keyup', 'mouseup' ]
     },
     accessibility: {
       'container_role': 'menubar',
@@ -1895,11 +1912,15 @@ TraversableMenu.options_default = function() {
       'menu_item_link_focus_first': true //set focus to first menu item link when panel is shown using keyboard
     },
     callbacks: {
+      trigger: {
+        before: null,
+        on: TraversableMenu.panelTriggerEventHandler,
+        after: null
+      },
       panel: {
         activate: {
           before: null,
-          after: null,
-          trigger: TraversableMenu.panelTriggerEventHandler
+          after: null          
         },
         initialize: {
           before: null,
