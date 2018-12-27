@@ -298,6 +298,8 @@ TraversableMenu.prototype.bootstrap = function() {
 TraversableMenu.prototype.panelInitialize = function(panel, options) {
   try {      
 
+    var trigger_index;
+
     //
     // Apply attributes to the given panel
     //
@@ -315,13 +317,6 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     for ( trigger_index = child_triggers.length - 1; trigger_index >= 0; trigger_index-- ) {
 
       var trigger = child_triggers[trigger_index];
-
-      if ( trigger.getAttribute('data-trigger-initialized-base') == true ) {
-        //
-        // Already initialized this trigger
-        //
-        continue;
-      }
 
       var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
 
@@ -349,11 +344,6 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
             // Apply necessary child attributes
             //
             this.panelAttributesApply(child_panel);
-
-            //
-            // Initialize the "back to top" trigger
-            //
-            this.topTriggerInit(child_panel);
 
             //
             // Finalize initialization of the trigger itself
@@ -388,14 +378,6 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     for ( trigger_index = 0; trigger_index < parent_triggers.length; trigger_index++ ) {
 
       var trigger = parent_triggers[trigger_index];
-
-      if ( trigger.getAttribute('data-trigger-initialized-base') == true ) {
-        //
-        // Already initialized this trigger
-        //
-        continue;
-      }
-
       var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
       var child_panel = menu_item.querySelector(this.option('selectors.panel'));
       
@@ -431,6 +413,11 @@ TraversableMenu.prototype.panelAttributesApply = function( panel, options ) {
     if ( this.option('accessibility.panel_role') != '' ) {
       panel.setAttribute( 'role', this.option('accessibility.panel_role') );
     }    
+
+    //
+    // Set up a top trigger if there is one
+    //
+    this.topTriggerInit(panel);
 
   }
   catch(e) {
@@ -608,6 +595,7 @@ TraversableMenu.prototype.parentTriggerInit = function( menu_item, panel ) {
     var parent_triggers;
 
     if ( parent_panel ) {
+
       parent_triggers = TraversableMenu.siblingChildrenBySelector( menu_item, this.option('selectors.panel_trigger_parent') );
 
       for ( var i = 0; i < parent_triggers.length; i++ ) {
@@ -722,7 +710,7 @@ TraversableMenu.prototype.triggerInitBase = function( trigger ) {
  * @param {DomElement} trigger
  * @return none
  */
-TraversableMenu.prototype.childTriggerInit = function( trigger, child_panel ) {
+TraversableMenu.prototype.childTriggerInit = function( trigger ) {
 
   try {
 
@@ -1785,22 +1773,24 @@ TraversableMenu.nearestAncestor = function( element, selector ) {
 
     var parent = element.parentNode;
 
-    if ( typeof(element.closest) != 'undefined') {
-      //
-      // closest will return the current element if it maches, 
-      // which is why we can call it on the immediate parent. 
-      //
-      return parent.closest(selector); 
-    }
-    else {
+    if ( parent ) {
+      if ( typeof(element.closest) != 'undefined') {
+        //
+        // closest will return the current element if it maches, 
+        // which is why we can call it on the immediate parent. 
+        //
+        return parent.closest(selector); 
+      }
+      else {
 
-      while( parent && parent !== document ) {
-        if ( parent.matches(selector) ) {
-          return parent;
+        while( parent && parent !== document ) {
+          if ( parent.matches(selector) ) {
+            return parent;
+          }
+
+          parent = parent.parentNode;
+
         }
-
-        parent = parent.parentNode;
-
       }
 
       return null;
