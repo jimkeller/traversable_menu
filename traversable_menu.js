@@ -10,7 +10,7 @@
 ***/
 function TraversableMenu( options ) {
 
-  TraversableMenu.instance_index++; 
+  TraversableMenu.instance_index++;
 
   var success = true;
   var callback = null;
@@ -27,7 +27,7 @@ function TraversableMenu( options ) {
     this.panels_active_trail = {};
     this.panels_container = null;
     this.depth_max_canonical = null;
-    this.trigger_index = 0; 
+    this.trigger_index = 0;
 
     if ( this.option('debug') != false ) {
       console.time('traversable_init');
@@ -46,7 +46,7 @@ function TraversableMenu( options ) {
     var panel_auto_activated = false;
 
     if ( this.option('auto_traverse_to_active') ) {
-      panel_auto_activated = this.panelActivateByActiveMenuItem(); 
+      panel_auto_activated = this.panelActivateByActiveMenuItem();
     }
 
     if ( !panel_auto_activated ) {
@@ -58,7 +58,7 @@ function TraversableMenu( options ) {
       if ( panels_container ) {
         var topmost_panel      = this.childPanelGet(panels_container); //get the first panel
         if ( topmost_panel ) {
-          this.panelActivate(topmost_panel, { 'show_immediate': true }); 
+          this.panelActivate(topmost_panel, { 'show_immediate': true });
         }
       }
 
@@ -78,7 +78,7 @@ function TraversableMenu( options ) {
     if ( this.option('debug') != false ) {
       console.timeEnd('traversable_init');
     }
-    
+
   }
   catch( e ) {
 
@@ -153,18 +153,18 @@ TraversableMenu.prototype.option = function ( key, val ) {
         eval( 'val_typeof = typeof(this.options' + key_string + ')');
 
         if ( val_typeof == 'undefined' ) {
-          eval( 'this.options' + key_string + '={};');          
-        }        
-        
+          eval( 'this.options' + key_string + '={};');
+        }
+
       }
 
       if ( key_string ) {
-        eval( 'this.options' + key_string + '=val;');           
+        eval( 'this.options' + key_string + '=val;');
       }
       else {
         throw 'Invalid parameters passed to option set';
       }
-      
+
     }
   }
   catch(e) {
@@ -175,14 +175,14 @@ TraversableMenu.prototype.option = function ( key, val ) {
 
 TraversableMenu.prototype.panelsGetContainer = function() {
   try {
-    
+
     if ( !this.panels_container ) {
       if ( this.option('render.panels_container') ) {
         this.panels_container = this.option('render.panels_container');
       }
       else {
-        this.panels_container = window.document.querySelector( this.option('selectors.panels_container') );   
-      }      
+        this.panels_container = window.document.querySelector( this.option('selectors.panels_container') );
+      }
     }
 
     return this.panels_container;
@@ -236,7 +236,7 @@ TraversableMenu.prototype.bootstrap = function() {
           if ( this.menu_item_active ) {
             var search_parent = this.menu_item_active.parentNode;
             var active_depth = 0;
-            //  
+            //
             // Find out how deep the active item is by scanning the DOM, since nothing has
             // been initialized yet
             //
@@ -286,7 +286,7 @@ TraversableMenu.prototype.bootstrap = function() {
 
     if ( !this.option('errors.silent_if_no_container') ) {
       throw "Could not get panels container. Check your container selector, which is set to: " + this.option('selectors.panels_container').toString();
-    }    
+    }
 
     return success;
 
@@ -298,7 +298,7 @@ TraversableMenu.prototype.bootstrap = function() {
 }
 
 TraversableMenu.prototype.panelInitialize = function(panel, options) {
-  try {      
+  try {
 
     var trigger_index;
 
@@ -313,7 +313,7 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     child_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_child') + ':not([data-trigger-initialized="true"])');
 
     //
-    // We start at the bottom of the tree and work our way up, so last trigger first. 
+    // We start at the bottom of the tree and work our way up, so last trigger first.
     // This will be the last trigger, at the deepest part of the last menu item in the panel
     //
     for ( trigger_index = child_triggers.length - 1; trigger_index >= 0; trigger_index-- ) {
@@ -323,12 +323,12 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
       var menu_item = TraversableMenu.nearestAncestor(trigger, this.option('selectors.menu_item'));
 
       if ( menu_item ) {
-        
+
         //
         // Initialize menu item
         //
         this.menuItemInit(menu_item);
-        
+
         //
         // Base initialization of the trigger
         //
@@ -357,7 +357,7 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
             // So we can say 'up to X menu' later
             //
             if ( menu_item_link ) {
-              if ( child_panel.getAttribute('data-trigger-link-text') == '' ) {
+              if ( !child_panel.getAttribute('data-trigger-link-text') ) {
                 child_panel.setAttribute('data-trigger-link-text', menu_item_link.innerHTML );
               }
             }
@@ -374,7 +374,7 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     }
 
     //
-    // Now do all parent triggers. We do this separately from the loop above so that we can be 
+    // Now do all parent triggers. We do this separately from the loop above so that we can be
     // sure that all panels are initialized.
     //
     parent_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_parent') + ':not([data-trigger-initialized="true"])');
@@ -384,7 +384,7 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     }
 
     //
-    // Set up top triggers 
+    // Set up top triggers
     //
     var top_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_top') + ':not([data-trigger-initialized="true"])');
 
@@ -405,7 +405,7 @@ TraversableMenu.prototype.panelAttributesApply = function( panel, options ) {
 
     var child_triggers;
     var parent_triggers;
-    var depth;  
+    var depth;
     var refresh = ( (typeof(options.refresh) != 'undefined' && options.refresh) || panel.getAttribute('data-panel-initialized') );
 
     //
@@ -414,7 +414,7 @@ TraversableMenu.prototype.panelAttributesApply = function( panel, options ) {
     depth = this.panelDepthDetermine(panel, { ignore_stored: true });
 
     panel.setAttribute( 'data-panel-depth', depth.toString() );
-    
+
     if ( refresh ) {
       //
       // Remove any existing depth classes
@@ -431,7 +431,7 @@ TraversableMenu.prototype.panelAttributesApply = function( panel, options ) {
     }
 
     panel.classList.add( TraversableMenu.tokenReplace(this.option('classes.panel_depth'), 'n', depth.toString()) );
-    
+
     //
     // On refresh, only certain attributes are updated.
     // The ones below are not updated on refresh.
@@ -445,7 +445,7 @@ TraversableMenu.prototype.panelAttributesApply = function( panel, options ) {
 
       if ( this.option('accessibility.panel_role') != '' ) {
         panel.setAttribute( 'role', this.option('accessibility.panel_role') );
-      }    
+      }
     }
 
     panel.setAttribute( 'data-panel-initialized', true );
@@ -469,6 +469,47 @@ TraversableMenu.prototype.panelsAttributesRefresh = function( options ) {
     throw e;
   }
 }
+
+/**
+ * Performs necessary steps to assimilate a panel that has been added after normal initialization routines,
+ * e.g. through AJAX/lazyloading
+ * @param {DomElement} panel
+ * @param {Array} options
+ * @return none
+ */
+
+TraversableMenu.prototype.panelAssimilate = function( panel, options ) {
+  try {
+
+    options = options || {};
+
+    var callback;
+    var callback_params = { traversable_menu: this, panel: panel, options: options };
+
+    if ( callback = this.option('callbacks.panel.assimilate.before') ) {
+      callback.call(this, callback_params);
+    }
+
+    this.panelInitialize(panel);
+    this.panelsAttributesRefresh();
+    this.panelsHeightStore();
+
+    if ( typeof(options.activate) != 'undefined' && options.activate ) {
+      this.panelActivate(panel);
+    }
+
+    this.panelsContainerResize();
+
+    if ( callback = this.option('callbacks.panel.assimilate.after') ) {
+      callback.call(this, callback_params);
+    }
+
+  }
+  catch(e) {
+    throw e;
+  }
+}
+
 
 TraversableMenu.prototype.panelDepthDetermine = function( panel, options ) {
 
@@ -508,13 +549,13 @@ TraversableMenu.prototype.panelDepthDetermine = function( panel, options ) {
   catch(e) {
     throw e;
   }
-  
+
 }
 
 TraversableMenu.prototype.panelDepthDetermineAbsolute = function( panel, options ) {
 
   try {
-    
+
     if ( panel.getAttribute('data-panel-depth-absolute') !== null ) {
       return panel.getAttribute('data-panel-depth-absolute');
     }
@@ -530,7 +571,7 @@ TraversableMenu.prototype.panelDepthDetermineAbsolute = function( panel, options
 
 TraversableMenu.prototype.menuItemIsActive = function( menu_item ) {
   try {
-    
+
     var menu_link = menu_item.querySelector(this.option('selectors.menu_item_link'));
     var active_selectors = this.activeItemSelectors();
 
@@ -569,7 +610,7 @@ TraversableMenu.prototype.activeURLsGet = function() {
         active_urls = active_urls.concat(  active_urls_explicit.call() );
       }
       else {
-        active_urls = active_urls.concat(  active_urls_explicit ); 
+        active_urls = active_urls.concat(  active_urls_explicit );
       }
     }
     else {
@@ -577,7 +618,7 @@ TraversableMenu.prototype.activeURLsGet = function() {
     }
 
     return active_urls;
-       
+
   }
   catch( e ) {
     throw e;
@@ -643,7 +684,7 @@ TraversableMenu.prototype.activeItemSelectors = function() {
 
 TraversableMenu.prototype.menuItemInit = function( menu_item ) {
   try {
-    
+
     if( this.option('accessibility.menu_item_role') != '' ) {
       menu_item.setAttribute( 'role', this.option('accessibility.menu_item_role') );
     }
@@ -667,7 +708,7 @@ TraversableMenu.prototype.parentTriggerInit = function( trigger ) {
     this.triggerInitBase(trigger, 'parent');
 
     var trigger_panel = TraversableMenu.nearestAncestor( trigger, this.option('selectors.panel') );
-    
+
     if ( trigger_panel ) {
       var parent_panel = this.panelGetParent(trigger_panel);
 
@@ -676,7 +717,7 @@ TraversableMenu.prototype.parentTriggerInit = function( trigger ) {
         parent_panel.setAttribute('data-panel-triggered-as-parent-by', trigger.getAttribute('id') );
       }
     }
-        
+
     this.parentTriggerTextApply(trigger);
 
   }
@@ -696,7 +737,7 @@ TraversableMenu.prototype.panelTriggerEventHandlerApply = function( trigger ) {
     //
     trigger.addEventListener('keyup', callback.bind(null, this), false );
     trigger.addEventListener('mouseup', callback.bind(null, this), false );
-    trigger.addEventListener('click', callback.bind(null, this), false );    
+    trigger.addEventListener('click', callback.bind(null, this), false );
 
   }
   catch(e) {
@@ -712,30 +753,24 @@ TraversableMenu.prototype.panelTriggerEventHandlerApply = function( trigger ) {
 TraversableMenu.prototype.parentTriggerTextApply = function( trigger ) {
 
   try {
- 
+
     var trigger_panel = TraversableMenu.nearestAncestor( trigger, this.option('selectors.panel') );
     var trigger_text_string_base = this.option('triggers.parent_text');
     var parent_link_text;
 
     if ( trigger_panel ) {
-      
-      if ( trigger_panel.getAttribute('data-parent-link-text') != '' ) {
-        //
-        // Parent link text was explicitly set in markup; respect it.
-        //
-        parent_link_text = trigger_panel.getAttribute('data-parent-link-text');
-      }
-      else {
+
+      parent_link_text = trigger_panel.getAttribute('data-parent-link-text');
+
+      if ( !parent_link_text ) {
         var parent_panel = this.panelGetParent(trigger_panel);
 
         if ( parent_panel ) {
 
           var parent_depth = this.panelDepthDetermine(parent_panel, { prefer_absolute: true } );
-    
           if ( parent_depth > 0 || !this.option('triggers.parent_text_use_top_at_first_level') ) {
             parent_link_text = parent_panel.getAttribute('data-trigger-link-text');
-
-            if ( parent_link_text == '' ) {
+            if ( !parent_link_text ) {
               //
               // If we didn't find a data attribute, see if we can locate this panel's parent menu item
               // and see what the link says. This might happen if panels are lazy loaded by AJAX.
@@ -796,7 +831,7 @@ TraversableMenu.prototype.triggerInitBase = function( trigger, type ) {
 
     this.triggerIDInit(trigger);
     this.panelTriggerEventHandlerApply( trigger );
-  
+
   }
   catch(e) {
     throw e;
@@ -819,7 +854,7 @@ TraversableMenu.prototype.childTriggerInit = function( trigger ) {
 
     var menu_item = TraversableMenu.nearestAncestor( trigger, this.option('selectors.menu_item') );
     var child_panel = menu_item.querySelector(this.option('selectors.panel'));
-  
+
     this.triggerAttributesInit(trigger, child_panel);
 
     child_panel.setAttribute('data-panel-triggered-as-child-by', trigger.getAttribute('id') );
@@ -827,7 +862,7 @@ TraversableMenu.prototype.childTriggerInit = function( trigger ) {
     if ( typeof(menu_item) !== 'undefined' && menu_item ) {
       this.panelTitleInit( child_panel, menu_item );
     }
-  
+
   }
   catch(e) {
     throw e;
@@ -840,7 +875,7 @@ TraversableMenu.prototype.topTriggerInit = function( trigger ) {
 
     var panel = TraversableMenu.nearestAncestor( trigger, this.option('selectors.panel') );
     var depth = this.panelDepthDetermine(panel, { 'prefer_absolute': true });
-    
+
     if ( trigger ) {
       if ( depth >= this.option('triggers.top_depth') ) {
 
@@ -895,7 +930,7 @@ TraversableMenu.prototype.triggerAttributesInit = function( trigger, panel ) {
       trigger.setAttribute('aria-controls', this.panelID(panel));
       trigger.setAttribute('data-panel-trigger-for', this.panelID(panel) );
     }
-    
+
   }
   catch(e) {
     throw e;
@@ -1020,7 +1055,7 @@ TraversableMenu.prototype.elementFind = function( selector ) {
     }
 
     return null;
-    
+
   }
   catch(e) {
     throw e;
@@ -1088,13 +1123,13 @@ TraversableMenu.prototype.activeMenuItemFind = function() {
               this_node = this_node.parentNode;
               parent_count--;
             }
-          }  
+          }
           else {
             final_match = matching_element;
           }
 
           if ( final_match ) {
-            break;      
+            break;
           }
         }
       }
@@ -1124,7 +1159,7 @@ TraversableMenu.prototype.panelActivateByActiveMenuItem = function() {
     var menu_link;
 
     this.menu_item_active = this.activeMenuItemFind();
-    
+
     if ( this.menu_item_active ) {
 
       this.menu_item_active.classList.add( TraversableMenu.classNameFromSelector(this.option('selectors.menu_item_active')) );
@@ -1299,7 +1334,7 @@ TraversableMenu.prototype.panelGetTriggerChild = function( panel ) {
 TraversableMenu.prototype.panelSetActive = function( panel ) {
 
   this.panel_active = panel;
-  
+
 }
 
 TraversableMenu.prototype.panelGetActive = function() {
@@ -1460,7 +1495,7 @@ TraversableMenu.prototype.panelActiveHeightApply = function ( ) {
     }
 
     if ( this.option('panels_container_height_auto') ) {
-      this.panelsContainerResize();      
+      this.panelsContainerResize();
     }
 
   }
@@ -1510,8 +1545,8 @@ TraversableMenu.prototype.panelActiveAttributesRemove = function( panel ) {
 TraversableMenu.prototype.activeTrailPanelRemember = function( panel ) {
   try {
 
-    this.panels_active_trail[ panel.getAttribute('id') ] = panel;    
-    
+    this.panels_active_trail[ panel.getAttribute('id') ] = panel;
+
   }
   catch(e) {
     throw e;
@@ -1525,7 +1560,7 @@ TraversableMenu.prototype.activeTrailPanelForget = function( panel ) {
     if ( typeof(this.panels_active_trail[panel.getAttribute('id')]) != 'undefined' ) {
       delete this.panels_active_trail[panel.getAttribute('id')];
     }
-    
+
   }
   catch(e) {
     throw e;
@@ -1537,7 +1572,7 @@ TraversableMenu.prototype.activeTrailPanelsGet = function() {
   try {
 
     return this.panels_active_trail;
-    
+
   }
   catch(e) {
     throw e;
@@ -1553,7 +1588,7 @@ TraversableMenu.prototype.activeTrailRecalculate = function() {
 
     if ( active_trail_panels ) {
       for ( var panel_id in active_trail_panels ) {
-        this.panelActiveTrailUnset(active_trail_panels[panel_id]);        
+        this.panelActiveTrailUnset(active_trail_panels[panel_id]);
       }
 
       if ( active_panel ) {
@@ -1630,7 +1665,7 @@ TraversableMenu.prototype.panelActiveTrailApply = function( panel ) {
 TraversableMenu.prototype.panelActiveTrailApplied = function( panel ) {
   try {
 
-    return panel.matches('.' + this.option('classes.panel_active_trail') );    
+    return panel.matches('.' + this.option('classes.panel_active_trail') );
 
   }
   catch( e ) {
@@ -1750,7 +1785,7 @@ TraversableMenu.activeURLsDefault = function() {
       var active_urls = [];
       var href_split = window.location.href.split('#');
       var pathname_with_query_string = window.location.href;
-      
+
       pathname_with_query_string = pathname_with_query_string.replace(/^[A-Za-z0-9]+:\/\//, '');
       pathname_with_query_string = pathname_with_query_string.substr( pathname_with_query_string.indexOf('/') );
 
@@ -1766,7 +1801,7 @@ TraversableMenu.activeURLsDefault = function() {
 
       //
       // Additional possible permutations of URL
-      //      
+      //
       if ( href_split.length > 1 ) {
         active_urls.push( href_split[0] ); //URL without fragment
 
@@ -1781,7 +1816,7 @@ TraversableMenu.activeURLsDefault = function() {
         active_urls.push( href_split[0] ); //URL without query string
       }
 
-      return active_urls; 
+      return active_urls;
 
   }
   catch(e) {
@@ -1795,10 +1830,10 @@ TraversableMenu.tokenReplace = function( given_string, token, val ) {
 
 
 TraversableMenu.classNameFromSelector = function( selector ) {
-  
+
   var split = selector.split('.');
   var final = split[split.length-1];
-  
+
   return final.toString().replace(/^\./, '');
 }
 
@@ -1876,10 +1911,10 @@ TraversableMenu.nearestAncestor = function( element, selector ) {
       if ( parent ) {
         if ( typeof(element.closest) != 'undefined') {
           //
-          // closest will return the current element if it maches, 
-          // which is why we can call it on the immediate parent. 
+          // closest will return the current element if it maches,
+          // which is why we can call it on the immediate parent.
           //
-          return parent.closest(selector); 
+          return parent.closest(selector);
         }
         else {
 
@@ -1891,7 +1926,7 @@ TraversableMenu.nearestAncestor = function( element, selector ) {
             parent = parent.parentNode;
 
           }
-        }      
+        }
       }
     }
 
@@ -1949,11 +1984,11 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 
       child_style = window.getComputedStyle(children[i]);
 
-      height += parseInt(children[i].scrollHeight); 
+      height += parseInt(children[i].scrollHeight);
 
       if ( child_style ) {
         height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //scrollHeight doesn't include margins
-        height += ( child_style.marginBottom != '' ) ? parseInt(child_style.marginBottom) : 0; 
+        height += ( child_style.marginBottom != '' ) ? parseInt(child_style.marginBottom) : 0;
         height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; //scrollHeight doesn't include borders
         height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
       }
@@ -1968,13 +2003,14 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 
 TraversableMenu.panelTriggerEventShouldFire = function( traversable_menu_obj, event ) {
 
+  console.log(event.type);
   try {
 
     var relevant_event_types = traversable_menu_obj.option('triggers.events');
 
     if ( relevant_event_types.indexOf(event.type) > -1 ) {
       if ( event.type == 'keyup' ) {
-        if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {            
+        if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
           return true;
         }
       }
@@ -1998,7 +2034,7 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
   try {
 
     var callback_params = { traversable_menu: this, event: event };
-    
+
     traversable_menu_obj.debug('trigger event fired');
     traversable_menu_obj.debug(event);
 
@@ -2028,14 +2064,14 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
           event.preventDefault();
 
           if ( typeof(event.which) !== 'undefined' && event.which == 13 ) {
-            
-            traversable_menu_obj.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);          
+
+            traversable_menu_obj.debug('Keyup triggered for panel:', panel_to_activate, 'From trigger: ', trigger);
             last_event = 'keyup';
             traversable_menu_obj.panelActivate( panel_to_activate, { 'focus_first_item': true } );
 
           }
           return false;
-        }  
+        }
         else if ( event.type == 'mouseup' ) {
 
           event.preventDefault();
@@ -2046,12 +2082,12 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
             last_event = 'mouseup';
             traversable_menu_obj.panelActivate( panel_to_activate );
           }
-                  
-        }      
+
+        }
         else if ( event.type == 'click' ) {
           //
           // Mouseup will handle everything without screwing around with touch events, so we basically disable click
-          //        
+          //
           event.preventDefault();
         }
       }
@@ -2059,7 +2095,7 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
       panel_to_activate.setAttribute('data-last-activation-event', last_event);
     }
 
-    if ( TraversableMenu.panelTriggerEventShouldFire(traversable_menu_obj, event) ) {   
+    if ( TraversableMenu.panelTriggerEventShouldFire(traversable_menu_obj, event) ) {
       if ( callback = traversable_menu_obj.option('callbacks.trigger.after') ) {
         callback.call(this, callback_params);
       }
@@ -2088,10 +2124,10 @@ TraversableMenu.options_default = function() {
       'menu_item': '.menu__item',
       'menu_item_link': '.menu__item__link',
       'menu_item_link_active': '.menu__item__link--active',
-      'tabbable_elements': 'a', //Tabbing to these is disabled when menu panel is closed      
-    },    
+      'tabbable_elements': 'a', //Tabbing to these is disabled when menu panel is closed
+    },
     triggers: {
-      'parent_text': 'Up to [:previous-title:] menu',
+      'parent_text': 'Up to [:previous-title:]',
       'top_text': 'Up to Main Menu',
       'top_depth': 2, //the depth at which to start showing 'up to main menu' link
       'top_remove_auto': true, //whether to automatically remove 'up to main menu' link if the depth < triggers.top_depth
@@ -2114,11 +2150,15 @@ TraversableMenu.options_default = function() {
       panel: {
         activate: {
           before: null,
-          after: null          
+          after: null
         },
         initialize: {
           before: null,
           after: null
+        },
+        'assimilate': {
+          'before': null,
+          'after': null
         }
       },
       panels: {
