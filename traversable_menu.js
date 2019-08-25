@@ -1982,25 +1982,41 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
     var children = TraversableMenu.immediateChildren(element);
     var child_style;
     var bounding_box;
+    var scroll_height;
     var height = 0;
 
     for( var i = 0; i < children.length; i++ ) {
 
-      bounding_box = children[i].getBoundingClientRect();
+      scroll_height = children[i].scrollHeight;
+
+      if ( !scroll_height ) {
+        //
+        // Inline elements won't have scroll height - in this instance, default to getBoundingClientRect()
+        //
+        bounding_box = children[i].getBoundingClientRect();
+
+        if ( bounding_box && typeof(bounding_box.height) != 'undefined' ) {
+          height += parseInt(bounding_box.height);
+        }
+      }
+      else {
+        height += parseInt(scroll_height);
+      }
 
       child_style = window.getComputedStyle(children[i]);
 
-      if ( bounding_box && typeof(bounding_box.height) != 'undefined' ) {
-        height += parseInt(bounding_box.height);
-      }
-
       if ( child_style ) {
-        height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //bounding box doesn't include margins
+        height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //height doesn't include margins
         height += ( child_style.marginBottom != '' ) ? parseInt(child_style.marginBottom) : 0;
         
-        //@TODO - Borders should be applied depending on box model. Currently assumes border-box.
-        //height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; 
-        //height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
+        if ( scroll_height ) {
+          //
+          // scroll height doesn't account for borders
+          // @TODO: Neither does getBoundingClientRect() in a box model other than border-box
+          //
+          height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; 
+          height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
+        }
       }
     }
 
@@ -2013,7 +2029,6 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 
 TraversableMenu.panelTriggerEventShouldFire = function( traversable_menu_obj, event ) {
 
-  console.log(event.type);
   try {
 
     var relevant_event_types = traversable_menu_obj.option('triggers.events');
