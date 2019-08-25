@@ -23,11 +23,6 @@ a {
 
 }
 
-.-panel-height-auto, 
-.-panels-container-height-auto  {
-  overflow-y: hidden;
-}
-
 .traversable-menu ul {
 
   list-style: none;

@@ -32,3 +32,9 @@
 .-show-immediate {
   transition-duration: 0ms !important;
 }
+
+.-panel-height-auto, 
+.-panels-container-height-auto {
+  overflow-y: hidden;
+}
+

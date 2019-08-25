@@ -1488,6 +1488,8 @@ TraversableMenu.prototype.panelActiveHeightApply = function ( ) {
     var new_height = this.panelApplyCalculatedHeight(active_panel);
     var parent_panel = this.panelGetParent(active_panel);
 
+    active_panel.classList.add( this.option('classes.panel_height_auto_applied') );
+
     while ( parent_panel ) {
        parent_panel.style.height = new_height.toString() + 'px';
        parent_panel.classList.add( this.option('classes.panel_height_auto_applied') );
@@ -1979,18 +1981,26 @@ TraversableMenu.heightCalculateBasedOnImmediateChildren = function( element, opt
 
     var children = TraversableMenu.immediateChildren(element);
     var child_style;
+    var bounding_box;
+    var height = 0;
 
     for( var i = 0; i < children.length; i++ ) {
 
+      bounding_box = children[i].getBoundingClientRect();
+
       child_style = window.getComputedStyle(children[i]);
 
-      height += parseInt(children[i].scrollHeight);
+      if ( bounding_box && typeof(bounding_box.height) != 'undefined' ) {
+        height += parseInt(bounding_box.height);
+      }
 
       if ( child_style ) {
-        height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //scrollHeight doesn't include margins
+        height += ( child_style.marginTop != '' ) ? parseInt(child_style.marginTop) : 0; //bounding box doesn't include margins
         height += ( child_style.marginBottom != '' ) ? parseInt(child_style.marginBottom) : 0;
-        height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; //scrollHeight doesn't include borders
-        height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
+        
+        //@TODO - Borders should be applied depending on box model. Currently assumes border-box.
+        //height += ( child_style.borderTopWidth != '' ) ? parseInt(child_style.borderTopWidth) : 0; 
+        //height += ( child_style.borderBottomWidth != '' ) ? parseInt(child_style.borderBottomWidth) : 0;
       }
     }
 
