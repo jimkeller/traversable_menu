@@ -2058,6 +2058,7 @@ TraversableMenu.panelTriggerEventShouldFire = function( traversable_menu_obj, ev
 TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event ) {
   try {
 
+    var callback;
     var callback_params = { traversable_menu: this, event: event };
 
     traversable_menu_obj.debug('trigger event fired');
