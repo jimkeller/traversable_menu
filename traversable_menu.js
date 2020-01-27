@@ -310,7 +310,7 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     //
     // Begin initialization of traversing behavior by locating all the triggers that show a child panel
     //
-    child_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_child') + ':not([data-trigger-initialized="true"])');
+    var child_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_child') + ':not([data-trigger-initialized="true"])');
 
     //
     // We start at the bottom of the tree and work our way up, so last trigger first.
@@ -377,7 +377,7 @@ TraversableMenu.prototype.panelInitialize = function(panel, options) {
     // Now do all parent triggers. We do this separately from the loop above so that we can be
     // sure that all panels are initialized.
     //
-    parent_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_parent') + ':not([data-trigger-initialized="true"])');
+    var parent_triggers = panel.querySelectorAll(this.option('selectors.panel_trigger_parent') + ':not([data-trigger-initialized="true"])');
 
     for ( trigger_index = 0; trigger_index < parent_triggers.length; trigger_index++ ) {
       this.parentTriggerInit(parent_triggers[trigger_index]); //menu_item, child_panel);
