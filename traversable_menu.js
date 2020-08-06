@@ -1511,8 +1511,12 @@ TraversableMenu.prototype.panelActiveHeightApply = function ( ) {
  */
 TraversableMenu.prototype.panelActiveAttributesApply = function( panel ) {
   try {
-
     panel.classList.add( this.option('classes.panel_active') );
+    if (panel.visibilityHiddenTimeout) {
+      clearTimeout(panel.visibilityHiddenTimeout);
+      panel.visibilityHiddenTimeout = false;
+    }
+    panel.style.visibility = 'visible';
     panel.setAttribute('aria-hidden', 'false');
     panel.setAttribute('tabindex', '0');
     panel.setAttribute('data-panel-active', true);
@@ -1527,21 +1531,20 @@ TraversableMenu.prototype.panelActiveAttributesApply = function( panel ) {
 }
 
 TraversableMenu.prototype.panelActiveAttributesRemove = function( panel ) {
-
   try {
     panel.classList.remove( this.option('classes.panel_active') );
+    panel.visibilityHiddenTimeout = setTimeout(function () {
+      panel.style.visibility = 'hidden';
+    }, this.option('panel_slide_animation_duration'));
     panel.setAttribute('aria-hidden', 'true');
     panel.setAttribute('tabindex', '-1');
     panel.setAttribute('data-panel-active', false);
 
     this.tabbablesToggle( panel, false );
-
-
   }
   catch(e) {
     throw e;
   }
-
 }
 
 TraversableMenu.prototype.activeTrailPanelRemember = function( panel ) {
