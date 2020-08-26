@@ -2076,6 +2076,18 @@ TraversableMenu.panelTriggerEventHandler = function( traversable_menu_obj, event
     var trigger = event.target;
     var last_event = null;
     var panel_id = trigger.getAttribute('data-panel-trigger-for');
+    if ( !panel_id ) {
+      traversable_menu_obj.debug('Could not determine panel_id in panelTriggerEventHandler. Searching parent elements for data-panel-trigger-for within the panel or menu item.');
+      var parent_selector_stop_panel = traversable_menu_obj.option('selectors.panel');
+      var parent_selector_stop_menu_item = traversable_menu_obj.option('selectors.menu_item');
+      var parent_selector_match = '[data-panel-trigger-for]';
+      var parent_selector_string = parent_selector_match + ', ' + parent_selector_stop_panel + ', ' + parent_selector_stop_menu_item;
+      //
+      // Look for element matching selector without going past elements matching "stop" selectors.
+      //
+      trigger = TraversableMenu.nearestAncestor(trigger, parent_selector_string);
+      panel_id = trigger.getAttribute('data-panel-trigger-for');
+    }
 
     if ( panel_id == null ) {
       traversable_menu_obj.debug('Could not determine panel_id in panelTriggerEventHandler. Tried to read data-panel-trigger-for argument and got null. This might not be a problem if you are lazy loading panel data');
