@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Traversable Menu example using JSON data</title>
+
+    <script src="../dist/traversable-menu.js"></script>
+    <link rel="stylesheet" href="./example.css">
+    <link rel="stylesheet" href="../dist/traversable-menu.css">
+  </head>
+  <body>
+    <div id="traversable-container"></div>
+  </body>
+</html>
+
+<script type="text/javascript">
+  const item_data = { 
+      'items': [
+          {
+          'text': 'About',
+          'link': 'http://www.example.com/about',
+          'items': [
+              {
+              'text': 'Our team',
+              'link': 'http://www.example.com/our-team',
+              },
+              {
+              'text': 'Our mission',
+              'link': 'http://localhost:45473/#our-mission',
+              'items': [
+                {
+                'text': 'Tertiary 1',
+                'link': 'http://www.example.com/tertiary-1',
+                }
+              ]
+              },
+          ]
+          },
+          {
+          'text': 'Other',
+          'link': 'other'
+          },
+          {
+            'text': 'Products',
+            'link': 'http://www.example.com/products',
+            'items': [
+              {
+                'text': 'Shoes',
+                'link': 'http://www.example.com/shoes',
+              },
+              {
+                'text': 'Shirts',
+                'link': 'http://www.example.com/shirts',
+                items: [
+                  {
+                    'text': 'Big shirts',
+                    'link': 'http://www.example.com/big-shirts'
+                  },
+                  {
+                    'text': 'Little shirts',
+                    'link': 'http://www.example.com/little-shirts'
+                  }
+                ]
+              }
+            ]
+          }
+      ]
+  }
+  
+  let traversable = new TraversableMenu();
+  traversable.initializeFromData(item_data);
+  traversable.renderInto(document.getElementById('traversable-container'));
+</script>
+

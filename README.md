@@ -6,24 +6,24 @@ Use basic HTML, javascript, and CSS to create a tiered navigation suitable for n
 
 ![Traversable menu example][traversable_menu_screenshot]
 
-Copyright (c) 2017 Jim Keller, Eastern Standard  
+By Jim Keller, Eastern Standard  
 https://www.easternstandard.com
 
 ## Key Features
 * Fully ADA / WCAG 2.0 / Section 508 compliant - supports keyboard navigation, tabbing, and aria labels
 * Extremely customizable - see the options list below
-* No dependencies (not even jQuery) - runs in plain javascript
+* No dependencies
 * ES6 compatible
 * Useful for both simple or extremely deep menus
 
 ## How to use
 
-1. If using npm, simply run "npm install traversable_menu". Otherwise, add [traversable_menu.css](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.css) and [traversable_menu.js](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/traversable_menu.js) to your project
+1. If using npm, simply run "npm install traversable_menu". Otherwise, add [traversable_menu.css](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/dist/traversable-menu.css) and [traversable_menu.js](https://raw.githubusercontent.com/jimkeller/traversable_menu/master/dist/traversable-menu.js) to your project
 
 
 2. Add the markup for your menu:
 ```
-<div class="traversable-menu">
+<div id="primary-menu" class="traversable-menu">
   <div class="menu__panel">
     <div class="menu__panel__title"><!-- automatically replaced with javascript --></div>
     <ul>
@@ -48,18 +48,21 @@ https://www.easternstandard.com
     </ul>
   </div>
 </div>
+
 ```
 3. Initialize traversable menu using basic options:
 
 ```
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  var traversable = new TraversableMenu(
+  let traversable = new TraversableMenu(
     {
       'panel_title_first': 'Traversable Menu Example'
         // many additional options here; see below 
     }
   );
+
+  traversable.initializeFromHTML("#primary-menu")
 });
 </script>
 ```

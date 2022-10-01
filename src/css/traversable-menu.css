@@ -1,0 +1,35 @@
+.traversable-menu {
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.traversable-menu .menu__panel {
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  padding: 0;
+  width: 100%;
+  transition: transform 350ms ease-in-out; /* If you change the transform duration, mke sure to also change the panel_slide_animation_duration setting when calling TraversableMenu */
+  transform: translateX(100%);
+  overflow-x: hidden;
+  overflow-y: auto;
+
+}
+
+.traversable-menu .menu__panel--depth-0,
+.traversable-menu .menu__panel--active-trail {
+  transform: translateX(0);
+}
+
+.traversable-menu .menu__panel.-show-immediate {
+  transition: none !important;
+}
+
+.traversable-menu .-panel-height-auto,
+.traversable-menu.-panels-container-height-auto {
+  overflow-y: hidden;
+}

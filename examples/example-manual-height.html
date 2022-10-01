@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Traversable Menu example - manual height override</title>
+
+    <link rel="stylesheet" href="../dist/traversable-menu.css">
+    <script src="../dist/traversable-menu.js"></script>
+    <link rel="stylesheet" href="./example.css">
+    <script type="text/javascript">
+      document.addEventListener("DOMContentLoaded", function() {
+        let traversable = new TraversableMenu({
+          panel: {
+            height_auto: false
+          }, 
+          panels_container: {
+            height_auto: false
+          }
+        });
+
+        traversable.initializeFromHTML("#primary-menu")
+      });
+    </script>
+  </head>
+  <body>
+
+  <div id="primary-menu" class="traversable-menu">
+    <div class="menu__panel">
+      <div id="test" class="menu__panel__title"></div>
+      <ul>
+        <li class="menu__item">
+          <a href="#/about" class="menu__item__link">About Us</a>
+        </li>
+        <li class="menu__item">
+          <a href="#/academics" class="menu__item__link">Academics</a>
+          <a href="#" class="menu__panel__trigger--child">Explore ></a>
+          <div class="menu__panel">
+            <div class="menu__panel__title"></div>
+            <a href="#" class="menu__panel__trigger--top">Up to top (this text gets replaced by JS)</a>
+            <a href="#" class="menu__panel__trigger--parent">Up a level (this text gets replaced by JS)</a>
+            <ul>
+              <li class="menu__item">
+                <a href="#/academics-sub" class="menu__item__link">Sub item to Academics</a>
+                <a href="#" class="menu__panel__trigger--child">Explore ></a>
+                <div class="menu__panel">
+                  <div class="menu__panel__title"></div>
+                  <a href="#" class="menu__panel__trigger--top">Up to top (this text gets replaced by JS)</a>
+                  <a href="#" class="menu__panel__trigger--parent">Up a level (this text gets replaced by JS)</a>
+                  <ul>
+                    <li class="menu__item">
+                      <a href="#/about-final-level-item" class="menu__item__link">Final level item</a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <li class="menu__item">
+          <a href="#/student-life" class="menu__item__link">Student Life</a>
+          <a href="#" class="menu__panel__trigger--child">Explore ></a>
+          <div class="menu__panel">
+            <div class="menu__panel__title"></div>
+            <a href="#" class="menu__panel__trigger--top">Up to top (this text gets replaced by JS)</a>
+            <a href="#" class="menu__panel__trigger--parent">Up a level (this text gets replaced by JS)</a>
+            <ul>
+              <li class="menu__item">
+                <a href="#/student-life/sub-item" class="menu__item__link">Sub item to Student Life</a>
+                <a href="#" class="menu__panel__trigger--child">Explore ></a>
+                <div class="menu__panel">
+                  <div class="menu__panel__title"></div>
+                  <a href="#" class="menu__panel__trigger--top">Up to top (this text gets replaced by JS)</a>
+                  <a href="#" class="menu__panel__trigger--parent">Up a level (this text gets replaced by JS)</a>
+                  <ul>
+                    <li class="menu__item">
+                      <a href="#/student-life-deepest" class="menu__item__link">Final level item in Student Life</a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+              <li class="menu__item"><a href="#/no-children-1-1" class="menu__item__link">item with no Children 1-1</a></li>
+              <li class="menu__item"><a href="#/no-children-1-2" class="menu__item__link">item with no Children 1-2</a></li>
+            </ul>
+          </div>
+
+        </li>
+        <li class="menu__item"><a href="#" class="menu__item__link">item with no Children 0-1</a></li>
+        <li class="menu__item"><a href="#" class="menu__item__link">Another item with no children 0-2</a></li>
+
+      </ul>
+    </div>
+  </div>
+
+  </body>

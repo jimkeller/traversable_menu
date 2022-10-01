@@ -3,23 +3,20 @@
   <head>
     <meta charset="utf-8">
     <title>Traversable Menu example</title>
-    <link rel="stylesheet" href="./traversable_menu.css">
+
+    <link rel="stylesheet" href="../dist/traversable-menu.css">
+    <script src="../dist/traversable-menu.js"></script>
     <link rel="stylesheet" href="./example.css">
-    <script src="./traversable_menu.js"></script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      var traversable = new TraversableMenu(
-        {
-          'panel_title_first': 'Traversable Menu Example'
-            // See options in bottom of traversable_menu.js to change selectors and other options
-        }
-      );
-    });
+    <script type="text/javascript">
+      document.addEventListener("DOMContentLoaded", function() {
+        let traversable = new TraversableMenu();
+        traversable.initializeFromHTML("#primary-menu")
+      });
     </script>
   </head>
   <body>
 
-  <div class="traversable-menu">
+  <div id="primary-menu" class="traversable-menu">
     <div class="menu__panel">
       <div id="test" class="menu__panel__title"></div>
       <ul>
