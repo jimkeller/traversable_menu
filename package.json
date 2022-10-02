@@ -20,7 +20,8 @@
     "watch-ts": "tsc -w",
     "clean": "tsc --build --clean",
     "watch-all": "concurrently --kill-others --names \"BUILD,RUN\" -c \"bgBlue.bold,bgMagenta.bold\" \"webpack --watch --mode=development\"",
-    "test": "jest"
+    "test": "jest",
+    "prepack": "webpack --mode=production"
   },
   "dependencies": {
     "esm": "^3.2.25"
