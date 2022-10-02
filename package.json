@@ -1,7 +1,17 @@
 {
   "name": "traversable_menu",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0-alpha",
+  "description": "A sliding multi-level navigation menu / push menu that is fully ADA compliant",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimkeller/traversable_menu.git"
+  },
+  "author": "Jim Keller",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/jimkeller/traversable_menu/issues"
+  },
+  "homepage": "https://github.com/jimkeller/traversable_menu#readme",  
   "module": "dist/traversable-menu.js",
   "main": "dist/traversable-menu.js",
   "browser": "dist/traversable-menu.js",
@@ -12,8 +22,6 @@
     "watch-all": "concurrently --kill-others --names \"BUILD,RUN\" -c \"bgBlue.bold,bgMagenta.bold\" \"webpack --watch --mode=development\"",
     "test": "jest"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "esm": "^3.2.25"
   },
@@ -37,5 +45,19 @@
     "typescript-eslint": "0.0.1-alpha.0",
     "webpack": "^5.74.0",
     "webpack-cli": "^4.10.0"
-  }
+  },
+  "keywords": [
+    "megamenu",
+    "menu",
+    "mobile",
+    "navigation",
+    "drawer",
+    "curtain",
+    "panels",
+    "submenu",
+    "vanilla",
+    "slide-menu",
+    "push-menu",
+    "sliding"
+  ]
 }
