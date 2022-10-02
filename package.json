@@ -1,6 +1,6 @@
 {
   "name": "traversable_menu",
-  "version": "2.0-alpha",
+  "version": "2.0.0-beta.0",
   "description": "A sliding multi-level navigation menu / push menu that is fully ADA compliant",
   "repository": {
     "type": "git",
@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/jimkeller/traversable_menu/issues"
   },
-  "homepage": "https://github.com/jimkeller/traversable_menu#readme",  
+  "homepage": "https://github.com/jimkeller/traversable_menu#readme",
   "module": "dist/traversable-menu.js",
   "main": "dist/traversable-menu.js",
   "browser": "dist/traversable-menu.js",
