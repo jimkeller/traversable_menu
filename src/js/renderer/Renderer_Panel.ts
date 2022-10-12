@@ -305,9 +305,9 @@ export default class Renderer_Panel {
       Renderer_ActiveTrail.recalculate(state)
   
       /**
-       * To make the transition more elegant, we set the height at a different timee
+       * To make the transition more elegant, we set the height at a different time
        * depending on if the user is moving up in the menu or down. This way, when moving up,
-       * we don'risk cutting off the bottom of the lower menu before it slides out of view.
+       * we don't risk cutting off the bottom of the lower menu before it slides out of view.
        */
        if (state.options.panel.height_auto) {
         Renderer_Panel.activeHeightApply(state)
